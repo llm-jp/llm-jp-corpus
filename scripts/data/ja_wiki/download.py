@@ -1,33 +1,35 @@
+"""Script to download Japanese Wikipedia data.
+
+Note:
+    This script is partly borrowed from the following repository,
+    which is distributed under the Apache License 2.0.
+        https://github.com/togethercomputer/RedPajama-Data
+"""
+import argparse
 import logging
-import os
-from logging import getLogger
+import pathlib
 
-import requests
-from tqdm import tqdm
+from datasets import load_dataset
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-DATA_DIR = os.getenv("DATA_DIR", "data/ja_wiki")
-DUMP_DATE = "20230601"
-URL = f"https://dumps.wikimedia.org/jawiki/{DUMP_DATE}/jawiki-{DUMP_DATE}-pages-articles.xml.bz2"
+LANGUAGE = "ja"
+DUMP_DATE = "20230320"
 
 
-def download(url: str, path: str) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    file_size: int = int(requests.head(url).headers["Content-Length"])
-    pbar: tqdm = tqdm(total=file_size, unit="B", unit_scale=True)
-    with open(path, "wb") as f:
-        with requests.get(url, stream=True) as r:
-            r.raise_for_status()
-            for chunk in r.iter_content(chunk_size=1024):
-                f.write(chunk)
-                pbar.update(len(chunk))
-
-
-def main() -> None:
-    logger.info(f"Downloading {URL} to {DATA_DIR}")
-    download(URL, os.path.join(DATA_DIR, "jawiki.xml.bz2"))
-    logger.info("Done")
+def get_data(language: str, date: str, data_dir: pathlib.Path) -> None:
+    wiki_dataset = load_dataset(
+        "wikipedia", language=language, date=date, beam_runner="DirectRunner"
+    )
+    for split, dataset in wiki_dataset.items():
+        file_path: pathlib.Path = data_dir.joinpath(
+            f"wiki_{language}_{date}_{split}.jsonl"
+        )
+        dataset.to_json(file_path)
+        logger.info(
+            f"Finished Downloading {language} {date}. "
+            f"There are total {len(dataset['id'])} pages."
+        )
 
 
 if __name__ == "__main__":
@@ -35,4 +37,13 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s %(name)s:%(lineno)d: %(levelname)s: %(message)s",
     )
-    main()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--data_dir",
+        type=str,
+        help="Path to the wikipedia data directory.",
+    )
+    args = parser.parse_args()
+
+    get_data(LANGUAGE, DUMP_DATE, data_dir=pathlib.Path(args.data_dir))
