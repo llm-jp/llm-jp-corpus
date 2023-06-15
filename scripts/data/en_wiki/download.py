@@ -17,15 +17,12 @@ LANGUAGE = "en"
 DUMP_DATE = "20230320"
 
 
-def get_data(
-    language: str, date: str, data_dir: pathlib.Path, num_proc: int = 1
-) -> None:
+def get_data(language: str, date: str, data_dir: pathlib.Path) -> None:
     wiki_dataset = load_dataset(
         "wikipedia",
         language=language,
         date=date,
         beam_runner="DirectRunner",
-        num_proc=num_proc,
     )
     for split, dataset in wiki_dataset.items():
         file_path: pathlib.Path = data_dir.joinpath(
@@ -50,17 +47,10 @@ if __name__ == "__main__":
         type=str,
         help="Path to the wikipedia data directory.",
     )
-    parser.add_argument(
-        "--num_proc",
-        type=int,
-        default=1,
-        help="Number of processes to use for downloading.",
-    )
     args = parser.parse_args()
 
     get_data(
         LANGUAGE,
         DUMP_DATE,
         data_dir=pathlib.Path(args.data_dir),
-        num_proc=args.num_proc,
     )
