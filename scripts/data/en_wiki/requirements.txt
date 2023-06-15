@@ -69,6 +69,8 @@ multidict==6.0.4
     #   yarl
 multiprocess==0.70.9
     # via datasets
+mwparserfromhell @ git+https://github.com/earwig/mwparserfromhell.git@0f89f44
+    # via -r requirements.in
 numpy==1.24.3
     # via
     #   apache-beam
