@@ -28,7 +28,7 @@ def get_data(language: str, date: str, data_dir: pathlib.Path) -> None:
         file_path: pathlib.Path = data_dir.joinpath(
             f"wiki_{language}_{date}_{split}.jsonl"
         )
-        dataset.to_json(file_path)
+        dataset.to_json(file_path, force_ascii=False)
         logger.info(
             f"Finished Downloading {language} {date}. "
             f"There are total {len(dataset['id'])} pages."
