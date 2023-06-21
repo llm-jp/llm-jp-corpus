@@ -6,5 +6,5 @@ wget -P "${DATA_DIR}" "${BASE_URL}/SHA256SUMS.txt"
 wget -P "${DATA_DIR}" "${BASE_URL}/test.jsonl.zst"
 wget -P "${DATA_DIR}" "${BASE_URL}/val.jsonl.zst"
 for i in $(seq -f "%02g" 0 29); do
-    wget -P "${DATA_DIR} $BASE_URL/train_${i}.jsonl.zst"
+    wget -P "${DATA_DIR}" "$BASE_URL/train_${i}.jsonl.zst"
 done
