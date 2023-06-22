@@ -18,3 +18,8 @@ pip install -r requirements.txt
 export DATA_DIR=/path/to/data/dir
 python download.py
 ```
+
+## Filtering
+```
+python sanitize.py in.json out.json
+```
