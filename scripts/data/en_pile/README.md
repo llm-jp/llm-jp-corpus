@@ -2,10 +2,6 @@
 
 Follow these instructions to create the Pile dataset.
 
-## Requirements
-
-- Python 3.9+
-
 ## Download
 
 ```bash

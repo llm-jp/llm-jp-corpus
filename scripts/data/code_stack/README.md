@@ -6,6 +6,12 @@ Follow these instructions to create the Stack dataset.
 
 - Python 3.9+
 
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Download
 
 ```bash
