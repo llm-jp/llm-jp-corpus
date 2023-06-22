@@ -13,13 +13,7 @@ from datasets import load_dataset
 
 logger = logging.getLogger(__name__)
 
-
-def get_data(data_dir: pathlib.Path) -> None:
-    stack_dataset = load_dataset("bigcode/the-stack")
-    for split, dataset in stack_dataset.items():
-        file_path: pathlib.Path = data_dir.joinpath(f"stack_{split}.jsonl")
-        dataset.to_json(file_path, force_ascii=False)
-    logger.info("Finished Downloading Stack.")
+DATASET_NAME = "bigcode/the-stack"
 
 
 if __name__ == "__main__":
@@ -36,4 +30,14 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    get_data(data_dir=pathlib.Path(args.data_dir))
+    data_dir = pathlib.Path(args.data_dir)
+    stack_dataset = load_dataset(DATASET_NAME)
+    for split, dataset in stack_dataset.items():
+        file_path: pathlib.Path = data_dir.joinpath(
+            f"{DATASET_NAME.split('/')[-1]}_{split}.jsonl"
+        )
+        dataset.to_json(file_path, force_ascii=False)
+        logger.info(
+            f"Finished downloading the {split} split. "
+            f"There are total {len(dataset['id'])} pages."
+        )

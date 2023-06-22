@@ -13,26 +13,9 @@ from datasets import load_dataset
 
 logger = logging.getLogger(__name__)
 
+DATASET_NAME = "wikipedia"
 LANGUAGE = "ja"
 DUMP_DATE = "20230320"
-
-
-def get_data(language: str, date: str, data_dir: pathlib.Path) -> None:
-    wiki_dataset = load_dataset(
-        "wikipedia",
-        language=language,
-        date=date,
-        beam_runner="DirectRunner",
-    )
-    for split, dataset in wiki_dataset.items():
-        file_path: pathlib.Path = data_dir.joinpath(
-            f"wiki_{language}_{date}_{split}.jsonl"
-        )
-        dataset.to_json(file_path, force_ascii=False)
-        logger.info(
-            f"Finished Downloading {language} {date}. "
-            f"There are total {len(dataset['id'])} pages."
-        )
 
 
 if __name__ == "__main__":
@@ -49,8 +32,19 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    get_data(
-        LANGUAGE,
-        DUMP_DATE,
-        data_dir=pathlib.Path(args.data_dir),
+    data_dir = pathlib.Path(args.data_dir)
+    wiki_dataset = load_dataset(
+        DATASET_NAME,
+        language=LANGUAGE,
+        date=DUMP_DATE,
+        beam_runner="DirectRunner",
     )
+    for split, dataset in wiki_dataset.items():
+        file_path: pathlib.Path = data_dir.joinpath(
+            f"{DATASET_NAME}_{LANGUAGE}_{DUMP_DATE}_{split}.jsonl"
+        )
+        dataset.to_json(file_path, force_ascii=False)
+        logger.info(
+            f"Finished downloading the {split} split. "
+            f"There are total {len(dataset['id'])} pages."
+        )
