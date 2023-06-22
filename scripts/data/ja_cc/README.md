@@ -18,3 +18,8 @@ pip install -r requirements.txt
 mkdir -p data  # or create a corresponding symlink
 python download.py --data_dir data
 ```
+
+## Filtering
+```
+python sanitize.py in.json out.json
+```
