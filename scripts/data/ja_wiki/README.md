@@ -15,6 +15,6 @@ pip install -r requirements.txt
 ## Download
 
 ```bash
-export DATA_DIR=/path/to/data/dir
-python download.py
+mkdir -p data  # or create a corresponding symlink
+python download.py --data_dir data
 ```
