@@ -45,6 +45,7 @@ def main() -> None:
                             "url": row["url"],
                             "language": language,
                             "timestamp": timestamp,
+                            "source": "wikipedia",
                         },
                     }
                     fout.write(json.dumps(reformatted_row, ensure_ascii=False) + "\n")

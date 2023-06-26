@@ -35,17 +35,15 @@ def main() -> None:
         output_path = pathlib.Path(args.output_dir).joinpath(output_file_name)
         with file_path.open("r") as fin:
             with output_path.open("wt") as fout:
-                _, language, timestamp, _ = file_path.stem.split("_")
                 for line in tqdm.tqdm(fin):
                     row = json.loads(line)
                     reformatted_row = {
                         "text": row["text"],
                         "meta": {
-                            "title": row["title"],
                             "url": row["url"],
-                            "language": language,
-                            "timestamp": timestamp,
-                            "source": "wikipedia",
+                            "language": "ja",
+                            "timestamp": row["timestamp"],
+                            "source": "mc4",
                         },
                     }
                     fout.write(json.dumps(reformatted_row, ensure_ascii=False) + "\n")
