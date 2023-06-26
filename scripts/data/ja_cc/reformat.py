@@ -31,6 +31,7 @@ def main() -> None:
     data_dir = pathlib.Path(args.data_dir)
     for file_path in data_dir.glob("*.jsonl"):
         logger.info(f"Reformatting {file_path.stem}.")
+        source, language, _ = file_path.stem.split("_")
         output_file_name = f"{file_path.stem}_reformatted.jsonl"
         output_path = pathlib.Path(args.output_dir).joinpath(output_file_name)
         with file_path.open("r") as fin:
@@ -41,9 +42,9 @@ def main() -> None:
                         "text": row["text"],
                         "meta": {
                             "url": row["url"],
-                            "language": "ja",
+                            "language": language,
                             "timestamp": row["timestamp"],
-                            "source": "mc4",
+                            "source": source,
                         },
                     }
                     fout.write(json.dumps(reformatted_row, ensure_ascii=False) + "\n")
