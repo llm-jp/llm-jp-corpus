@@ -38,12 +38,12 @@ def main() -> None:
         logger.info(f"Reformatting {file_path.stem}.")
         source, language, timestamp, _ = file_path.stem.split("_")
         output_file_name = f"{file_path.stem}_reformatted.jsonl"
-        output_path = pathlib.Path(args.output_dir).joinpath(output_file_name)
-        if output_path.exists() and not args.overwrite:
-            logger.info(f"{output_path} already exists. Skipping.")
+        output_file = pathlib.Path(args.output_dir).joinpath(output_file_name)
+        if output_file.exists() and not args.overwrite:
+            logger.info(f"{output_file} already exists. Skipping.")
             continue
         with file_path.open("r") as fin:
-            with output_path.open("wt") as fout:
+            with output_file.open("wt") as fout:
                 for line in tqdm.tqdm(fin):
                     row = json.loads(line)
                     reformatted_row = {

@@ -23,10 +23,11 @@ python download.py --output_dir data/download
 
 ```bash
 mkdir -p data/reformat  # or create a corresponding symlink
-python reformet.py --data_dir data --output_dir data/reformat
+python reformet.py --data_dir data/download --output_dir data/reformat
 ```
 
 ## Filtering
 ```
-python sanitize.py in.json out.json
+mkdir -p data/filtered  # or create a corresponding symlink
+python sanitize.py --data_dir data/reformat --output_dir data/filter
 ```

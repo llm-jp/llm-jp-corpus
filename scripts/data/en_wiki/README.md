@@ -23,5 +23,5 @@ python download.py --output_dir data/download
 
 ```bash
 mkdir -p data/reformat  # or create a corresponding symlink
-python reformet.py --data_dir data --output_dir data/reformat
+python reformet.py --data_dir data/download --output_dir data/reformat
 ```
