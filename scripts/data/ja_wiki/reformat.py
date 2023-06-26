@@ -3,6 +3,8 @@ import logging
 import pathlib
 from argparse import ArgumentParser
 
+import tqdm
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,14 +27,16 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    logger.info(f"Reformatting the data in {args.data_dir}.")
     data_dir = pathlib.Path(args.data_dir)
     for file_path in data_dir.glob("*.jsonl"):
+        logger.info(f"Reformatting {file_path.stem}.")
         output_file_name = f"{file_path.stem}_reformatted.jsonl"
         output_path = pathlib.Path(args.output_dir).joinpath(output_file_name)
         with file_path.open("r") as fin:
             with output_path.open("wt") as fout:
                 _, language, timestamp, _ = file_path.stem.split("_")
-                for line in fin:
+                for line in tqdm.tqdm(fin):
                     row = json.loads(line)
                     reformatted_row = {
                         "text": row["text"],
@@ -44,6 +48,7 @@ def main() -> None:
                         },
                     }
                     fout.write(json.dumps(reformatted_row, ensure_ascii=False) + "\n")
+                    logger.info(f"Finished reformatting {file_path.stem}.")
 
 
 if __name__ == "__main__":
