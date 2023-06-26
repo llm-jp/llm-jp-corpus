@@ -48,7 +48,7 @@ def main() -> None:
                         },
                     }
                     fout.write(json.dumps(reformatted_row, ensure_ascii=False) + "\n")
-                    logger.info(f"Finished reformatting {file_path.stem}.")
+                logger.info(f"Finished reformatting {file_path.stem}.")
 
 
 if __name__ == "__main__":
