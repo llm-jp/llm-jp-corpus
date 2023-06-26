@@ -63,6 +63,7 @@ def main() -> None:
                 for line in tqdm.tqdm(lines)
             )
 
+        logger.info(f"Writing the reformatted data to {output_file}.")
         with output_file.open("wt") as fout:
             for row in rows:
                 fout.write(json.dumps(row, ensure_ascii=False) + "\n")
