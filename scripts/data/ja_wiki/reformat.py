@@ -29,8 +29,8 @@ def main() -> None:
     for file_path in data_dir.glob("*.jsonl"):
         output_file_name = f"{file_path.stem}_reformatted.jsonl"
         output_path = pathlib.Path(args.output_dir).joinpath(output_file_name)
-        with output_path.open("wt") as fin:
-            with file_path.open("r") as fout:
+        with file_path.open("r") as fin:
+            with output_path.open("wt") as fout:
                 _, language, timestamp, _ = file_path.stem.split("_")
                 for line in fin:
                     row = json.loads(line)
