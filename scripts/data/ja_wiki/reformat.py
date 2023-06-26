@@ -25,6 +25,11 @@ def main() -> None:
         type=str,
         help="Path to the output directory.",
     )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Whether to overwrite the output directory.",
+    )
     args = parser.parse_args()
 
     logger.info(f"Reformatting the data in {args.data_dir}.")
@@ -34,6 +39,9 @@ def main() -> None:
         source, language, timestamp, _ = file_path.stem.split("_")
         output_file_name = f"{file_path.stem}_reformatted.jsonl"
         output_path = pathlib.Path(args.output_dir).joinpath(output_file_name)
+        if output_path.exists() and not args.overwrite:
+            logger.info(f"{output_path} already exists. Skipping.")
+            continue
         with file_path.open("r") as fin:
             with output_path.open("wt") as fout:
                 for line in tqdm.tqdm(fin):
