@@ -42,12 +42,6 @@ def tokenize(data_dir: pathlib.Path, output_dir: pathlib.Path, model_name: str) 
 def main() -> None:
     parser = ArgumentParser()
     parser.add_argument(
-        "DATASET_NAME",
-        type=str,
-        choices=["ja_wiki", "en_wiki", "ja_cc", "en_pile", "code_stack"],
-        help="Dataset name",
-    )
-    parser.add_argument(
         "--data_dir",
         type=str,
         help="Path to the wikipedia data directory.",

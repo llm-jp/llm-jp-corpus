@@ -43,15 +43,15 @@ def main() -> None:
     output_dir.mkdir(parents=True)
 
     logger.info(f"Reformatting the data in {args.data_dir}.")
-    if args.DATA_NAME == "ja_wiki":
+    if args.DATASET_NAME == "ja_wiki":
         filter_ja_wiki(data_dir, output_dir)
-    elif args.DATA_NAME == "en_wiki":
+    elif args.DATASET_NAME == "en_wiki":
         filter_en_wiki(data_dir, output_dir)
-    elif args.DATA_NAME == "ja_cc":
+    elif args.DATASET_NAME == "ja_cc":
         filter_ja_cc(data_dir, output_dir)
-    elif args.DATA_NAME == "en_pile":
+    elif args.DATASET_NAME == "en_pile":
         filter_en_pile(data_dir, output_dir)
-    elif args.DATA_NAME == "code_stack":
+    elif args.DATASET_NAME == "code_stack":
         filter_code_stack(data_dir, output_dir)
 
 
