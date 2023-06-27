@@ -25,7 +25,7 @@ def main() -> None:
             for line in tqdm.tqdm(fin.readlines()):
                 row: dict = json.loads(line)
                 token_count += len(row["tokens"])
-        logger.info(f"{file_path.stem} has {token_count} tokens.")
+        logger.info(f"{file_path.stem} has {token_count:,} tokens.")
 
 
 if __name__ == "__main__":
