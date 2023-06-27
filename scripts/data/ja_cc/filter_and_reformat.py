@@ -1,4 +1,3 @@
-import argparse
 import json
 import logging
 import pathlib
@@ -10,6 +9,7 @@ import regex
 import tqdm
 
 logger = logging.getLogger(__name__)
+
 
 PATTERN = regex.compile(r"[\p{Script=Hiragana}\p{Script=Katakana}ー]+")
 
@@ -79,56 +79,39 @@ def valid_url(url: str) -> bool:
     return tld in VALID_URLS
 
 
-def sanitize(line: str):
-    entry = json.loads(line)
-    if valid_url(entry["meta"]["url"]):
-        valid, invalid = extract_text(entry["text"])
+def _filter_and_reformat(line: str, language: str, source: str):
+    row = json.loads(line)
+    if valid_url(row["meta"]["url"]):
+        valid, invalid = extract_text(row["text"])
     else:
         valid = ""
-        invalid = entry["text"]
-    return {"text": valid, "invalid_text": invalid, "meta": entry["meta"]}
+        invalid = row["text"]
+    return {
+        "text": valid,
+        "meta": {
+            "url": row["url"],
+            "language": language,
+            "timestamp": row["timestamp"],
+            "source": source,
+            "invalid_text": invalid,
+        },
+    }
 
 
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s %(name)s:%(lineno)d: %(levelname)s: %(message)s",
-    )
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--data_dir",
-        type=str,
-        help="Path to the wikipedia data directory.",
-    )
-    parser.add_argument(
-        "--output_dir",
-        type=str,
-        help="Path to the output directory.",
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Whether to overwrite the output directory.",
-    )
-    args = parser.parse_args()
-
-    logger.info(f"Filtering the data in {args.data_dir}.")
-    data_dir = pathlib.Path(args.data_dir)
+def filter_and_reformat(data_dir: pathlib.Path, output_dir: pathlib.Path) -> None:
     for file_path in data_dir.glob("*.jsonl"):
-        logger.info(f"Filtering {file_path}.")
-        output_file_name = f"{file_path.stem}_filtered.jsonl"
-        output_file = pathlib.Path(args.output_dir) / output_file_name
-        if output_file.exists() and not args.overwrite:
-            logger.info(f"{output_file} already exists. Skipping.")
-            continue
-
+        logger.info(f"Reformatting {file_path.stem}.")
+        source, language, _ = file_path.stem.split("_")
         with file_path.open("r") as fin:
-            lines = fin.readlines()
-            rows = joblib.Parallel(n_jobs=-1)(
-                joblib.delayed(sanitize)(i) for i in tqdm.tqdm(lines)
+            lines: list[str] = fin.readlines()
+            rows: list[dict] = joblib.Parallel(n_jobs=-1)(
+                joblib.delayed(_filter_and_reformat)(line, language, source)
+                for line in tqdm.tqdm(lines)
             )
-
+        output_file_name = f"{file_path.stem}_reformatted.jsonl"
+        output_file = output_dir.joinpath(output_file_name)
+        logger.info(f"Writing the reformatted data to {output_file}.")
         with output_file.open("wt") as fout:
             for row in rows:
                 fout.write(json.dumps(row, ensure_ascii=False) + "\n")
+            logger.info(f"Finished reformatting {file_path.stem}.")

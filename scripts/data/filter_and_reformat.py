@@ -2,11 +2,11 @@ import logging
 import pathlib
 from argparse import ArgumentParser
 
-from code_stack.reformat import reformat as reformat_code_stack
-from en_pile.reformat import reformat as reformat_en_pile
-from en_wiki.reformat import reformat as reformat_en_wiki
-from ja_cc.reformat import reformat as reformat_ja_cc
-from ja_wiki.reformat import reformat as reformat_ja_wiki
+from code_stack.filter_and_reformat import filter_and_reformat as filter_code_stack
+from en_pile.filter_and_reformat import filter_and_reformat as filter_en_pile
+from en_wiki.filter_and_reformat import filter_and_reformat as filter_en_wiki
+from ja_cc.filter_and_reformat import filter_and_reformat as filter_ja_cc
+from ja_wiki.filter_and_reformat import filter_and_reformat as filter_ja_wiki
 
 logger = logging.getLogger(__name__)
 
@@ -44,15 +44,15 @@ def main() -> None:
 
     logger.info(f"Reformatting the data in {args.data_dir}.")
     if args.DATA_NAME == "ja_wiki":
-        reformat_ja_wiki(data_dir, output_dir)
+        filter_ja_wiki(data_dir, output_dir)
     elif args.DATA_NAME == "en_wiki":
-        reformat_en_wiki(data_dir, output_dir)
+        filter_en_wiki(data_dir, output_dir)
     elif args.DATA_NAME == "ja_cc":
-        reformat_ja_cc(data_dir, output_dir)
+        filter_ja_cc(data_dir, output_dir)
     elif args.DATA_NAME == "en_pile":
-        reformat_en_pile(data_dir, output_dir)
+        filter_en_pile(data_dir, output_dir)
     elif args.DATA_NAME == "code_stack":
-        reformat_code_stack(data_dir, output_dir)
+        filter_code_stack(data_dir, output_dir)
 
 
 if __name__ == "__main__":

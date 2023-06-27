@@ -15,13 +15,13 @@ python download.py en_pile --output_dir data/download/en_pile
 python download.py code_stack --output_dir data/download/code_stack
 ```
 
-## Reformatting the data
+## Filtering and reformatting the data
 
 ```bash
 mkdir -p data/reformat  # or create a corresponding symlink
-python reformat.py ja_wiki --input_dir data/download/ja_wiki --output_dir data/reformat/ja_wiki
-python reformat.py en_wiki --input_dir data/download/en_wiki --output_dir data/reformat/en_wiki
-python reformat.py ja_cc --input_dir data/download/ja_cc --output_dir data/reformat/ja_cc
-python reformat.py en_pile --input_dir data/download/en_pile --output_dir data/reformat/en_pile
-python reformat.py code_stack --input_dir data/download/code_stack --output_dir data/reformat/code_stack
+python filter_and_reformat.py ja_wiki --input_dir data/download/ja_wiki --output_dir data/reformat/ja_wiki
+python filter_and_reformat.py en_wiki --input_dir data/download/en_wiki --output_dir data/reformat/en_wiki
+python filter_and_reformat.py ja_cc --input_dir data/download/ja_cc --output_dir data/reformat/ja_cc
+python filter_and_reformat.py en_pile --input_dir data/download/en_pile --output_dir data/reformat/en_pile
+python filter_and_reformat.py code_stack --input_dir data/download/code_stack --output_dir data/reformat/code_stack
 ```
