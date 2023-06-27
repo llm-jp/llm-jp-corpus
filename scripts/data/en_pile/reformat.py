@@ -11,12 +11,11 @@ logger = logging.getLogger(__name__)
 def reformat(data_dir: pathlib.Path, output_dir: pathlib.Path) -> None:
     for file_path in data_dir.glob("*.jsonl"):
         logger.info(f"Reformatting {file_path.stem}.")
-        source, language, _ = file_path.stem.split("_")
+        source, _ = file_path.stem.split("_")
         with file_path.open("r") as fin:
             lines: list[str] = fin.readlines()
             rows: list[dict] = joblib.Parallel(n_jobs=-1)(
-                joblib.delayed(_reformat)(line, language, source)
-                for line in tqdm.tqdm(lines)
+                joblib.delayed(_reformat)(line, source) for line in tqdm.tqdm(lines)
             )
         output_file_name = f"{file_path.stem}_reformatted.jsonl"
         output_file = output_dir.joinpath(output_file_name)
@@ -27,14 +26,12 @@ def reformat(data_dir: pathlib.Path, output_dir: pathlib.Path) -> None:
             logger.info(f"Finished reformatting {file_path.stem}.")
 
 
-def _reformat(line: str, language: str, source: str) -> dict:
+def _reformat(line: str, source: str) -> dict:
     row: dict = json.loads(line)
     return {
-        "text": row["text"],
+        "text": row["content"],
         "meta": {
-            "url": row["url"],
-            "language": language,
-            "timestamp": row["timestamp"],
+            **{k: v for k, v in row.items() if k != "content"},
             "source": source,
         },
     }
