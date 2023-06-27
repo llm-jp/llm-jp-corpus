@@ -5,32 +5,30 @@ from argparse import ArgumentParser
 
 import joblib
 import tqdm
-from tokenizers import Tokenizer
+from transformers import AutoTokenizer, PreTrainedTokenizer
 
 logger = logging.getLogger(__name__)
 
 
-def _tokenize(line: str, tokenizer: Tokenizer, model_name: str) -> dict:
+def _tokenize(line: str, tokenizer: PreTrainedTokenizer) -> dict:
     row: dict = json.loads(line)
     text = row["text"]
-    encoding = tokenizer.encode(text)
-    row["tokens"] = encoding.tokens
-    row["token_ids"] = encoding.ids
-    row["tokenizer_name"] = model_name
+    tokens = tokenizer.tokenize(text)
+    row["tokens"] = tokens
+    row["tokenizer_name"] = tokenizer.name_or_path
     return row
 
 
 def tokenize(data_dir: pathlib.Path, output_dir: pathlib.Path, model_name: str) -> None:
     logger.info("Initialize the tokenizer.")
-    tokenizer = Tokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     for file_path in data_dir.glob("*.jsonl"):
         logger.info(f"Tokenizing {file_path.stem}.")
         with file_path.open("r") as fin:
             lines: list[str] = fin.readlines()
             rows: list[dict] = joblib.Parallel(n_jobs=-1)(
-                joblib.delayed(_tokenize)(line, tokenizer, model_name)
-                for line in tqdm.tqdm(lines)
+                joblib.delayed(_tokenize)(line, tokenizer) for line in tqdm.tqdm(lines)
             )
         output_file_name = f"{file_path.stem}_filtered.jsonl"
         output_file = output_dir.joinpath(output_file_name)
