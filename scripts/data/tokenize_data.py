@@ -67,7 +67,7 @@ def main() -> None:
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     if output_dir.exists() and not args.overwrite:
         raise FileExistsError(f"{output_dir} already exists.")
-    output_dir.mkdir(parents=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"Tokenize the data in {args.data_dir}.")
     tokenize(data_dir, output_dir, args.model_name)
