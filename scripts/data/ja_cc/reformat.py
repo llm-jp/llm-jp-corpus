@@ -9,15 +9,14 @@ import tqdm
 logger = logging.getLogger(__name__)
 
 
-def reformat(line: str, language: str, timestamp: str, source: str) -> dict:
+def reformat(line: str, language: str, source: str) -> dict:
     row: dict = json.loads(line)
     return {
         "text": row["text"],
         "meta": {
-            "title": row["title"],
             "url": row["url"],
             "language": language,
-            "timestamp": timestamp,
+            "timestamp": row["timestamp"],
             "source": source,
         },
     }
@@ -51,7 +50,7 @@ def main() -> None:
     data_dir = pathlib.Path(args.data_dir)
     for file_path in data_dir.glob("*.jsonl"):
         logger.info(f"Reformatting {file_path.stem}.")
-        source, language, timestamp, _ = file_path.stem.split("_")
+        source, language, _ = file_path.stem.split("_")
         output_file_name = f"{file_path.stem}_reformatted.jsonl"
         output_file = pathlib.Path(args.output_dir).joinpath(output_file_name)
         if output_file.exists() and not args.overwrite:
@@ -60,7 +59,7 @@ def main() -> None:
         with file_path.open("r") as fin:
             lines: list[str] = fin.readlines()
             rows: list[dict] = joblib.Parallel(n_jobs=-1)(
-                joblib.delayed(reformat)(line, language, timestamp, source)
+                joblib.delayed(reformat)(line, language, source)
                 for line in tqdm.tqdm(lines)
             )
 

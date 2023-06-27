@@ -25,16 +25,16 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--data_dir",
+        "--output_dir",
         type=str,
         help="Path to the wikipedia data directory.",
     )
     args = parser.parse_args()
 
-    data_dir = pathlib.Path(args.data_dir)
+    output_dir = pathlib.Path(args.output_dir)
     wiki_dataset = load_dataset(DATASET_NAME, languages=[LANGUAGE])
     for split, dataset in wiki_dataset.items():
-        file_path: pathlib.Path = data_dir.joinpath(
+        file_path: pathlib.Path = output_dir.joinpath(
             f"{DATASET_NAME}_{LANGUAGE}_{split}.jsonl"
         )
         dataset.to_json(file_path, force_ascii=False)
