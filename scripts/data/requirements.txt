@@ -134,6 +134,8 @@ six==1.16.0
     # via
     #   hdfs
     #   python-dateutil
+tokenizers==0.13.3
+    # via -r requirements.in
 tqdm==4.65.0
     # via
     #   datasets
