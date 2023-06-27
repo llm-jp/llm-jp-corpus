@@ -38,7 +38,7 @@ def main() -> None:
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     if output_dir.exists() and not args.overwrite:
         raise FileExistsError(f"{output_dir} already exists.")
-    output_dir.mkdir(parents=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     if args.DATASET_NAME == "ja_wiki":
         download_ja_wiki(output_dir)
