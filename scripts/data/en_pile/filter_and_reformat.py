@@ -28,7 +28,7 @@ def filter_and_reformat(data_dir: pathlib.Path, output_dir: pathlib.Path) -> Non
             rows: list[dict] = joblib.Parallel(n_jobs=-1)(
                 joblib.delayed(reformat)(line, source) for line in tqdm.tqdm(lines)
             )
-        output_file_name = f"{file_path.stem}_reformatted.jsonl"
+        output_file_name = f"{file_path.stem}_filtered.jsonl"
         output_file = output_dir.joinpath(output_file_name)
         logger.info(f"Writing the reformatted data to {output_file}.")
         with output_file.open("wt") as fout:
