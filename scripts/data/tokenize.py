@@ -1,12 +1,44 @@
+import json
 import logging
 import pathlib
 from argparse import ArgumentParser
 
+import joblib
+import tqdm
+from tokenizers import Tokenizer
+
 logger = logging.getLogger(__name__)
 
 
-def tokenize(data_dir: pathlib.Path, output_dir: pathlib.Path) -> None:
-    pass
+def _tokenize(line: str, tokenizer: Tokenizer, model_name: str) -> dict:
+    row: dict = json.loads(line)
+    text = row["text"]
+    encoding = tokenizer.encode(text)
+    row["tokens"] = encoding.tokens
+    row["token_ids"] = encoding.ids
+    row["tokenizer_name"] = model_name
+    return row
+
+
+def tokenize(data_dir: pathlib.Path, output_dir: pathlib.Path, model_name: str) -> None:
+    logger.info("Initialize the tokenizer.")
+    tokenizer = Tokenizer.from_pretrained(model_name)
+
+    for file_path in data_dir.glob("*.jsonl"):
+        logger.info(f"Tokenizing {file_path.stem}.")
+        with file_path.open("r") as fin:
+            lines: list[str] = fin.readlines()
+            rows: list[dict] = joblib.Parallel(n_jobs=-1)(
+                joblib.delayed(_tokenize)(line, tokenizer, model_name)
+                for line in tqdm.tqdm(lines)
+            )
+        output_file_name = f"{file_path.stem}_filtered.jsonl"
+        output_file = output_dir.joinpath(output_file_name)
+        logger.info(f"Writing the reformatted data to {output_file}.")
+        with output_file.open("wt") as fout:
+            for row in rows:
+                fout.write(json.dumps(row, ensure_ascii=False) + "\n")
+            logger.info(f"Finished reformatting {file_path.stem}.")
 
 
 def main() -> None:
@@ -28,6 +60,11 @@ def main() -> None:
         help="Path to the output directory.",
     )
     parser.add_argument(
+        "--model_name",
+        type=str,
+        default="cyberagent/open-calm-7b",  # TODO: Update the default model name.
+    )
+    parser.add_argument(
         "--overwrite",
         action="store_true",
         help="Whether to overwrite the output directory.",
@@ -41,7 +78,7 @@ def main() -> None:
     output_dir.mkdir(parents=True)
 
     logger.info(f"Tokenize the data in {args.data_dir}.")
-    tokenize(data_dir, output_dir)
+    tokenize(data_dir, output_dir, args.model_name)
 
 
 if __name__ == "__main__":
