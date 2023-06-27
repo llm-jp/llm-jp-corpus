@@ -4,6 +4,12 @@
 
 - Python 3.9
 
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Downloading the data
 
 ```bash
