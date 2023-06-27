@@ -1,11 +1,3 @@
-"""Script to download Japanese Wikipedia data.
-
-Note:
-    This script is partly borrowed from the following repository,
-    which is distributed under the Apache License 2.0.
-        https://github.com/togethercomputer/RedPajama-Data
-"""
-import argparse
 import logging
 import pathlib
 
@@ -18,21 +10,7 @@ LANGUAGE = "en"
 DUMP_DATE = "20230320"
 
 
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s %(name)s:%(lineno)d: %(levelname)s: %(message)s",
-    )
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--output_dir",
-        type=str,
-        help="Path to the wikipedia data directory.",
-    )
-    args = parser.parse_args()
-
-    output_dir = pathlib.Path(args.output_dir)
+def download(output_dir: pathlib.Path) -> None:
     wiki_dataset = load_dataset(
         DATASET_NAME,
         language=LANGUAGE,

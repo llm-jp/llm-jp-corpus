@@ -5,7 +5,7 @@ from datasets import load_dataset
 
 logger = logging.getLogger(__name__)
 
-DATASET_NAME = "bigcode/the-stack"
+DATASET_NAME = "EleutherAI/pile"
 
 
 def download(output_dir: pathlib.Path) -> None:
