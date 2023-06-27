@@ -42,3 +42,14 @@ python tokenize_data.py --data_dir data/filter/ja_cc --output_dir data/tokenize/
 python tokenize_data.py --data_dir data/filter/en_pile --output_dir data/tokenize/en_pile
 python tokenize_data.py --data_dir data/filter/code_stack --output_dir data/tokenize/code_stack
 ```
+
+## Sampling the data
+
+```bash
+mkdir -p data/sample  # or create a corresponding symlink
+python sample_data.py --data_dir data/filter/ja_wiki --output_dir data/sample --token_size -1  # Use all data
+python sample_data.py --data_dir data/filter/en_wiki --output_dir data/sample --token_size -1  # Use all data
+python sample_data.py --data_dir data/filter/ja_cc --output_dir data/sample --token_size -1  # Use all data
+python sample_data.py --data_dir data/filter/en_pile --output_dir data/sample --token_size 30000000000  # Use 30B tokens
+python sample_data.py --data_dir data/filter/code_stack --output_dir data/sample --token_size 30000000000  # Use 30B tokens
+```
