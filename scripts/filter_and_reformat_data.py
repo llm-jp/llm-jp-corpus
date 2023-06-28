@@ -38,21 +38,26 @@ def main() -> None:
 
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
-    if output_dir.exists() and not args.overwrite:
-        raise FileExistsError(f"{output_dir} already exists.")
-    output_dir.mkdir(parents=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"Reformatting the data in {args.data_dir}.")
-    if args.DATA_NAME == "ja_wiki":
-        filter_ja_wiki(data_dir, output_dir)
-    elif args.DATA_NAME == "en_wiki":
-        filter_en_wiki(data_dir, output_dir)
-    elif args.DATA_NAME == "ja_cc":
-        filter_ja_cc(data_dir, output_dir)
-    elif args.DATA_NAME == "en_pile":
-        filter_en_pile(data_dir, output_dir)
-    elif args.DATA_NAME == "code_stack":
-        filter_code_stack(data_dir, output_dir)
+    for file_path in data_dir.glob("*.jsonl"):
+        output_file_name = f"{file_path.stem}_filtered.jsonl"
+        output_file = output_dir.joinpath(output_file_name)
+        if output_file.exists() and not args.overwrite:
+            logger.warning(f"{output_file} already exists. Skip this file.")
+            continue
+
+        if args.DATASET_NAME == "ja_wiki":
+            filter_ja_wiki(file_path, output_file)
+        elif args.DATASET_NAME == "en_wiki":
+            filter_en_wiki(file_path, output_file)
+        elif args.DATASET_NAME == "ja_cc":
+            filter_ja_cc(file_path, output_file)
+        elif args.DATASET_NAME == "en_pile":
+            filter_en_pile(file_path, output_file)
+        elif args.DATASET_NAME == "code_stack":
+            filter_code_stack(file_path, output_file)
 
 
 if __name__ == "__main__":
