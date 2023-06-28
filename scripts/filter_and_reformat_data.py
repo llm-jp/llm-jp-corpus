@@ -1,7 +1,10 @@
+import json
 import logging
 import pathlib
 from argparse import ArgumentParser
+from multiprocessing import Pool
 
+import tqdm
 from code_stack.filter_and_reformat import filter_and_reformat as filter_code_stack
 from en_pile.filter_and_reformat import filter_and_reformat as filter_en_pile
 from en_wiki.filter_and_reformat import filter_and_reformat as filter_en_wiki
@@ -42,6 +45,8 @@ def main() -> None:
 
     logger.info(f"Reformatting the data in {args.data_dir}.")
     for file_path in data_dir.glob("*.jsonl"):
+        logger.info(f"Reformatting {file_path.stem}.")
+
         output_file_name = f"{file_path.stem}_filtered.jsonl"
         output_file = output_dir.joinpath(output_file_name)
         if output_file.exists() and not args.overwrite:
@@ -49,15 +54,32 @@ def main() -> None:
             continue
 
         if args.DATASET_NAME == "ja_wiki":
-            filter_ja_wiki(file_path, output_file)
+            filter_fn = filter_ja_wiki
         elif args.DATASET_NAME == "en_wiki":
-            filter_en_wiki(file_path, output_file)
+            filter_fn = filter_en_wiki
         elif args.DATASET_NAME == "ja_cc":
-            filter_ja_cc(file_path, output_file)
+            filter_fn = filter_ja_cc
         elif args.DATASET_NAME == "en_pile":
-            filter_en_pile(file_path, output_file)
+            filter_fn = filter_en_pile
         elif args.DATASET_NAME == "code_stack":
-            filter_code_stack(file_path, output_file)
+            filter_fn = filter_code_stack
+        else:
+            raise ValueError(f"Unknown dataset name: {args.DATASET_NAME}.")
+
+        with file_path.open("r") as fin:
+            lines: list[str] = fin.readlines()
+            with Pool() as p:
+                rows: list[dict] = []
+                # Do not use imap_unordered because the order of the lines must
+                # be preserved for reproducibility.
+                for row in tqdm.tqdm(p.imap(filter_fn, lines), total=len(lines)):
+                    rows.append(row)
+
+        logger.info(f"Writing the reformatted data to {output_file}.")
+        with output_file.open("wt") as fout:
+            for row in rows:
+                fout.write(json.dumps(row, ensure_ascii=False) + "\n")
+            logger.info(f"Finished reformatting {file_path.stem}.")
 
 
 if __name__ == "__main__":

@@ -1,15 +1,14 @@
 import json
 import logging
-import pathlib
 import typing
 from urllib.parse import urlparse
 
-import joblib
 import regex
-import tqdm
 
 logger = logging.getLogger(__name__)
 
+DATASET_NAME = "mc4"
+LANGUAGE = "ja"
 
 PATTERN = regex.compile(r"[\p{Script=Hiragana}\p{Script=Katakana}ー]+")
 
@@ -79,7 +78,7 @@ def valid_url(url: str) -> bool:
     return tld in VALID_URLS
 
 
-def _filter_and_reformat(line: str, language: str, source: str):
+def filter_and_reformat(line: str) -> dict:
     row = json.loads(line)
     if valid_url(row["meta"]["url"]):
         valid, invalid = extract_text(row["text"])
@@ -90,25 +89,9 @@ def _filter_and_reformat(line: str, language: str, source: str):
         "text": valid,
         "meta": {
             "url": row["url"],
-            "language": language,
+            "language": LANGUAGE,
             "timestamp": row["timestamp"],
-            "source": source,
+            "source": DATASET_NAME,
             "invalid_text": invalid,
         },
     }
-
-
-def filter_and_reformat(file_path: pathlib.Path, output_file: pathlib.Path) -> None:
-    logger.info(f"Reformatting {file_path.stem}.")
-    source, language, _ = file_path.stem.split("_")
-    with file_path.open("r") as fin:
-        lines: list[str] = fin.readlines()
-        rows: list[dict] = joblib.Parallel(n_jobs=-1)(
-            joblib.delayed(_filter_and_reformat)(line, language, source)
-            for line in tqdm.tqdm(lines)
-        )
-    logger.info(f"Writing the reformatted data to {output_file}.")
-    with output_file.open("wt") as fout:
-        for row in rows:
-            fout.write(json.dumps(row, ensure_ascii=False) + "\n")
-        logger.info(f"Finished reformatting {file_path.stem}.")
