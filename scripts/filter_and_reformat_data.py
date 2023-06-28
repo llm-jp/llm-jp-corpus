@@ -4,6 +4,7 @@ import pathlib
 from argparse import ArgumentParser
 from multiprocessing import Pool
 
+import tqdm
 from code_stack.filter_and_reformat import filter_and_reformat as filter_code_stack
 from en_pile.filter_and_reformat import filter_and_reformat as filter_en_pile
 from en_wiki.filter_and_reformat import filter_and_reformat as filter_en_wiki
@@ -68,7 +69,11 @@ def main() -> None:
         with file_path.open("r") as fin:
             lines: list[str] = fin.readlines()
             with Pool() as p:
-                rows: list[dict] = p.map(filter_fn, lines)
+                rows: list[dict] = []
+                # Do not use imap_unordered because the order of the lines must
+                # be preserved for reproducibility.
+                for row in tqdm.tqdm(p.imap(filter_fn, lines)):
+                    rows.append(row)
 
         logger.info(f"Writing the reformatted data to {output_file}.")
         with output_file.open("wt") as fout:

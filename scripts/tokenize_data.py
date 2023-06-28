@@ -4,6 +4,7 @@ import pathlib
 from argparse import ArgumentParser
 from multiprocessing import Pool
 
+import tqdm
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,11 @@ def main() -> None:
         with file_path.open("r") as fin:
             lines: list[str] = fin.readlines()
             with Pool() as p:
-                rows: list[dict] = p.map(tokenize, lines)
+                rows: list[dict] = []
+                # Do not use imap_unordered because the order of the lines must
+                # be preserved for reproducibility.
+                for row in tqdm.tqdm(p.imap(tokenize, lines)):
+                    rows.append(row)
         logger.info(f"Writing the reformatted data to {output_file}.")
         with output_file.open("wt") as fout:
             for row in rows:
