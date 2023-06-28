@@ -2,15 +2,16 @@ import json
 import logging
 import pathlib
 from argparse import ArgumentParser
+from multiprocessing import Pool
 
-import joblib
-import tqdm
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
 logger = logging.getLogger(__name__)
 
+tokenizer: PreTrainedTokenizer
 
-def tokenize(line: str, tokenizer: PreTrainedTokenizer) -> dict:
+
+def tokenize(line: str) -> dict:
     row: dict = json.loads(line)
     text = row["text"]
     tokens = tokenizer.tokenize(text)
@@ -48,6 +49,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Initialize the tokenizer.")
+    global tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
 
     logger.info(f"Tokenize the data in {args.data_dir}.")
@@ -60,9 +62,8 @@ def main() -> None:
         logger.info(f"Tokenizing {file_path.stem}.")
         with file_path.open("r") as fin:
             lines: list[str] = fin.readlines()
-            rows: list[dict] = joblib.Parallel(n_jobs=-1)(
-                joblib.delayed(tokenize)(line, tokenizer) for line in tqdm.tqdm(lines)
-            )
+            with Pool() as p:
+                rows: list[dict] = p.map(tokenize, lines)
         logger.info(f"Writing the reformatted data to {output_file}.")
         with output_file.open("wt") as fout:
             for row in rows:
