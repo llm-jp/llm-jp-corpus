@@ -67,7 +67,7 @@ def main() -> None:
                 rows: list[dict] = []
                 # Do not use imap_unordered because the order of the lines must
                 # be preserved for reproducibility.
-                for row in tqdm.tqdm(p.imap(tokenize, lines)):
+                for row in tqdm.tqdm(p.imap(tokenize, lines), total=len(lines)):
                     rows.append(row)
         logger.info(f"Writing the reformatted data to {output_file}.")
         with output_file.open("wt") as fout:
