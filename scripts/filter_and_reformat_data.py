@@ -2,9 +2,8 @@ import json
 import logging
 import pathlib
 from argparse import ArgumentParser
+from multiprocessing import Pool
 
-import joblib
-import tqdm
 from code_stack.filter_and_reformat import filter_and_reformat as filter_code_stack
 from en_pile.filter_and_reformat import filter_and_reformat as filter_en_pile
 from en_wiki.filter_and_reformat import filter_and_reformat as filter_en_wiki
@@ -68,9 +67,9 @@ def main() -> None:
 
         with file_path.open("r") as fin:
             lines: list[str] = fin.readlines()
-            rows: list[dict] = joblib.Parallel(n_jobs=-1)(
-                joblib.delayed(filter_fn)(line) for line in tqdm.tqdm(lines)
-            )
+            with Pool() as p:
+                rows: list[dict] = p.map(filter_fn, lines)
+
         logger.info(f"Writing the reformatted data to {output_file}.")
         with output_file.open("wt") as fout:
             for row in rows:
