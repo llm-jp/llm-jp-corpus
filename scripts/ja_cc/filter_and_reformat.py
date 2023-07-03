@@ -1,6 +1,6 @@
-import json
 import logging
 import typing
+from typing import Any
 from urllib.parse import urlparse
 
 import regex
@@ -78,19 +78,18 @@ def valid_url(url: str) -> bool:
     return tld in VALID_URLS
 
 
-def filter_and_reformat(line: str) -> dict:
-    row = json.loads(line)
-    if valid_url(row["meta"]["url"]):
-        valid, invalid = extract_text(row["text"])
+def filter_and_reformat(example) -> dict[str, Any]:
+    if valid_url(example["meta"]["url"]):
+        valid, invalid = extract_text(example["text"])
     else:
         valid = ""
-        invalid = row["text"]
+        invalid = example["text"]
     return {
         "text": valid,
         "meta": {
-            "url": row["url"],
+            "url": example["url"],
             "language": LANGUAGE,
-            "timestamp": row["timestamp"],
+            "timestamp": example["timestamp"],
             "source": DATASET_NAME,
             "invalid_text": invalid,
         },
