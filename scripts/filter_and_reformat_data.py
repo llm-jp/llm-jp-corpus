@@ -82,7 +82,13 @@ def main() -> None:
     else:
         raise ValueError(f"Unknown dataset name: {args.DATASET_NAME}.")
 
-    dataset = dataset.map(filter_fn, batched=False)
+    dataset = dataset.map(
+        filter_fn,
+        remove_columns=list(
+            set(list(dataset["train"].take(1))[0].keys()) - {"text", "meta"}
+        ),
+        batched=False,
+    )
 
     logger.info(f"Writing the reformatted data to {output_dir}.")
     chunk_index = 0
