@@ -88,6 +88,8 @@ def main() -> None:
             set(list(dataset["train"].take(1))[0].keys()) - {"text", "meta"}
         ),
         batched=False,
+    ).filter(
+        lambda example: example["text"] != "",
     )
 
     logger.info(f"Writing the reformatted data to {output_dir}.")
