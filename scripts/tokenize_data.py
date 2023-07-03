@@ -1,10 +1,11 @@
-import json
 import logging
+import os
 import pathlib
 from argparse import ArgumentParser
-from multiprocessing import Pool
+from typing import Any
 
-import tqdm
+from datasets import DatasetDict, load_dataset
+from datasets.splits import Split
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
 logger = logging.getLogger(__name__)
@@ -12,13 +13,32 @@ logger = logging.getLogger(__name__)
 tokenizer: PreTrainedTokenizer
 
 
-def tokenize(line: str) -> dict:
-    row: dict = json.loads(line)
-    text = row["text"]
-    tokens = tokenizer.tokenize(text)
-    row["tokens"] = tokens
-    row["tokenizer_name"] = tokenizer.name_or_path
-    return row
+def tokenize_function(examples) -> dict[str, Any]:
+    encodings = tokenizer(
+        examples["text"],
+        truncation=False,
+        return_attention_mask=False,
+        is_split_into_words=False,
+    )
+    return {
+        "input_ids": encodings["input_ids"],
+        "tokens": [enc.tokens for enc in encodings.encodings],
+    }
+
+
+def get_data_files(search_dir: pathlib.Path) -> dict[Split, pathlib.Path]:
+    train_files = list(search_dir.glob("*train*.jsonl"))
+    valid_files = list(search_dir.glob("*valid*.jsonl"))
+    test_files = list(search_dir.glob("*test*.jsonl"))
+    assert len(train_files) == 1, f"Found {len(train_files)} train files."
+    assert len(valid_files) <= 1, f"Found {len(valid_files)} valid files."
+    assert len(test_files) <= 1, f"Found {len(test_files)} test files."
+    data_files = {Split.TRAIN: train_files[0]}
+    if len(valid_files) == 1:
+        data_files[Split.VALIDATION] = valid_files[0]
+    if len(test_files) == 1:
+        data_files[Split.TEST] = test_files[0]
+    return data_files
 
 
 def main() -> None:
@@ -47,33 +67,38 @@ def main() -> None:
 
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
+    if output_dir.exists() and not args.overwrite:
+        logger.warning(f"{output_dir} already exists. Specify --overwrite to continue.")
+        exit(1)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Initialize the tokenizer.")
     global tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
 
-    logger.info(f"Tokenize the data in {args.data_dir}.")
-    for file_path in data_dir.glob("*.jsonl"):
-        output_file_name = f"{file_path.stem}_tokenized.jsonl"
-        output_file = output_dir.joinpath(output_file_name)
-        if output_dir.exists() and not args.overwrite:
-            logger.warning(f"{output_file} already exists. Skip this file.")
-            continue
-        logger.info(f"Tokenizing {file_path.stem}.")
-        with file_path.open("r") as fin:
-            lines: list[str] = fin.readlines()
-            with Pool() as p:
-                rows: list[dict] = []
-                # Do not use imap_unordered because the order of the lines must
-                # be preserved for reproducibility.
-                for row in tqdm.tqdm(p.imap(tokenize, lines), total=len(lines)):
-                    rows.append(row)
-        logger.info(f"Writing the reformatted data to {output_file}.")
-        with output_file.open("wt") as fout:
-            for row in rows:
-                fout.write(json.dumps(row, ensure_ascii=False) + "\n")
-            logger.info(f"Finished reformatting {file_path.stem}.")
+    logger.info("Loading the dataset")
+    dataset: DatasetDict = load_dataset(
+        "json", data_files={k: str(v) for k, v in get_data_files(data_dir).items()}
+    )
+    logger.info("Tokenizing the dataset.")
+    dataset = dataset.map(
+        tokenize_function,
+        batched=True,
+        batch_size=128,
+        num_proc=os.cpu_count(),
+    )
+    logger.info("Finished tokenizing the dataset.")
+
+    logger.info(f"Writing the tokenized data to {output_dir}.")
+    for split, ds in dataset.items():
+        output_file: pathlib.Path = output_dir.joinpath(f"{split}.parquet")
+        if output_file.exists() and not args.overwrite:
+            logger.error(
+                f"{output_file} already exists. Specify --overwrite to continue."
+            )
+            exit(1)
+        ds.to_parquet(output_file)
+        logger.info(f"Finished writing the tokenized {split} split to {output_file}.")
 
 
 if __name__ == "__main__":
