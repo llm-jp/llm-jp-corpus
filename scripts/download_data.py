@@ -51,7 +51,7 @@ def main() -> None:
     elif args.DATASET_NAME == "ja_cc":
         dataset = load_dataset(
             "mc4",
-            language=["ja"],
+            languages=["ja"],
             streaming=True,
         )
     elif args.DATASET_NAME == "en_pile":
