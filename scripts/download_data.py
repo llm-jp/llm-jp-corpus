@@ -40,7 +40,6 @@ def main() -> None:
             language="ja",
             date="20230320",
             beam_runner="DirectRunner",
-            streaming=True,
         )
     elif args.DATASET_NAME == "en_wiki":
         dataset = load_dataset(
@@ -48,7 +47,6 @@ def main() -> None:
             language="en",
             date="20230320",
             beam_runner="DirectRunner",
-            streaming=True,
         )
     elif args.DATASET_NAME == "ja_cc":
         dataset = load_dataset(
