@@ -79,7 +79,7 @@ def valid_url(url: str) -> bool:
 
 
 def filter_and_reformat(example) -> dict[str, Any]:
-    if valid_url(example["meta"]["url"]):
+    if valid_url(example["url"]):
         valid, invalid = extract_text(example["text"])
     else:
         valid = ""
