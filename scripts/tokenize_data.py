@@ -1,6 +1,7 @@
 import logging
 import os
 import pathlib
+import time
 from argparse import ArgumentParser
 from typing import Any
 
@@ -54,6 +55,8 @@ def main() -> None:
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    start_time = time.time()
+
     logger.info("Initialize the tokenizer.")
     global tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
@@ -81,6 +84,11 @@ def main() -> None:
         logger.info(f"Writing the tokenized data to {output_dir}.")
         dataset.to_parquet(output_file)
         logger.info(f"Finished writing the tokenized to {output_file}.")
+
+    end_time = time.time()
+    logger.info(
+        f"Finished tokenizing the dataset. Elapsed time: {end_time - start_time} [sec]"
+    )
 
 
 if __name__ == "__main__":

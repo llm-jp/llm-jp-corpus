@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import time
 from argparse import ArgumentParser
 from typing import Any, Callable
 
@@ -61,6 +62,8 @@ def main() -> None:
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    start_time = time.time()
+
     logger.info("Loading the dataset")
     dataset: IterableDatasetDict = load_dataset(
         "json",
@@ -111,6 +114,11 @@ def main() -> None:
                 f"Finished writing the reformatted {split} split to {output_file}."
             )
             chunk_index += 1
+
+    end_time = time.time()
+    logger.info(
+        f"Finished tokenizing the dataset. Elapsed time: {end_time - start_time} [sec]"
+    )
 
 
 if __name__ == "__main__":
