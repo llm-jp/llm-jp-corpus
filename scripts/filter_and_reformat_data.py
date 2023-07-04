@@ -93,8 +93,8 @@ def main() -> None:
     )
 
     logger.info(f"Writing the reformatted data to {output_dir}.")
-    chunk_index = 0
     for split, ds in dataset.items():
+        chunk_index = 0
         for batch in tqdm(ds.iter(batch_size=CHUNK_SIZE)):
             output_file: pathlib.Path = output_dir.joinpath(
                 f"{split}_{chunk_index}.parquet"
@@ -108,6 +108,7 @@ def main() -> None:
             logger.info(
                 f"Finished writing the tokenized {split} split to {output_file}."
             )
+            chunk_index += 1
 
 
 if __name__ == "__main__":
