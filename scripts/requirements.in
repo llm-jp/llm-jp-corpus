@@ -1,7 +1,6 @@
 datasets
 apache_beam
 git+https://github.com/earwig/mwparserfromhell.git@0f89f44
-joblib
 regex
 transformers
 sentencepiece
