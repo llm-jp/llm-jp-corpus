@@ -5,25 +5,20 @@ import time
 from argparse import ArgumentParser
 from typing import Any
 
+import sentencepiece as spm
 from datasets import Dataset
 from tqdm import tqdm
-from transformers import AutoTokenizer, PreTrainedTokenizer
 
 logger = logging.getLogger(__name__)
 
-tokenizer: PreTrainedTokenizer
+sentence_piece_processor: spm.SentencePieceProcessor
 
 
 def tokenize_function(examples) -> dict[str, Any]:
-    encodings = tokenizer(
-        examples["text"],
-        truncation=False,
-        return_attention_mask=False,
-        is_split_into_words=False,
-    )
     return {
-        "input_ids": encodings["input_ids"],
-        "tokens": [enc.tokens for enc in encodings.encodings],
+        "tokens": [
+            sentence_piece_processor.encode_as_pieces(text) for text in examples["text"]
+        ],
     }
 
 
@@ -40,9 +35,9 @@ def main() -> None:
         help="Path to the output directory.",
     )
     parser.add_argument(
-        "--model_name",
+        "--sentencepiece_model",
         type=str,
-        default="cyberagent/open-calm-7b",  # TODO: Update the default model name.
+        required=True,
     )
     parser.add_argument(
         "--overwrite",
@@ -58,8 +53,8 @@ def main() -> None:
     start_time = time.time()
 
     logger.info("Initialize the tokenizer.")
-    global tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    global sentence_piece_processor
+    sentence_piece_processor = spm.SentencePieceProcessor(args.sentencepiece_model)
 
     logger.info("Loading the dataset")
     for input_file in tqdm(data_dir.glob("*.parquet")):
