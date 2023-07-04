@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
-CHUNK_SIZE = 16_000_000
+CHUNK_SIZE = 100_000
 
 
 def get_data_files(search_dir: pathlib.Path, ext: str) -> dict[Split, pathlib.Path]:
