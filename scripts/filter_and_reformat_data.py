@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from typing import Any, Callable
 
 from code_stack.filter_and_reformat import filter_and_reformat as filter_code_stack
-from datasets import Dataset, IterableDatasetDict, load_dataset
+from datasets import Dataset, IterableDatasetDict, disable_caching, load_dataset
 from datasets.splits import Split
 from en_pile.filter_and_reformat import filter_and_reformat as filter_en_pile
 from en_wiki.filter_and_reformat import filter_and_reformat as filter_en_wiki
@@ -14,6 +14,7 @@ from ja_wiki.filter_and_reformat import filter_and_reformat as filter_ja_wiki
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+disable_caching()
 
 CHUNK_SIZE = 100_000
 

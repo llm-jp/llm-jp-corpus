@@ -6,10 +6,11 @@ from argparse import ArgumentParser
 from typing import Any
 
 import sentencepiece as spm
-from datasets import Dataset
+from datasets import Dataset, disable_caching
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+disable_caching()
 
 sentence_piece_processor: spm.SentencePieceProcessor
 
