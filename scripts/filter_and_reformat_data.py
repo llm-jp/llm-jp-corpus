@@ -108,7 +108,7 @@ def main() -> None:
 
             Dataset.from_dict(batch).to_parquet(output_file)
             logger.info(
-                f"Finished writing the tokenized {split} split to {output_file}."
+                f"Finished writing the reformatted {split} split to {output_file}."
             )
             chunk_index += 1
 
