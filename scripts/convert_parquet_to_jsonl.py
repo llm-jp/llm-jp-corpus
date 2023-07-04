@@ -34,7 +34,7 @@ def main() -> None:
     logger.info("Loading the dataset")
     for input_file in tqdm(data_dir.glob("*.parquet")):
         logger.info(f"Loading {input_file}.")
-        dataset: Dataset = Dataset.from_parquet(str(input_file))
+        dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
 
         logger.info(f"Writing the dataset to {output_dir} in JSONL format.")
         output_file: pathlib.Path = output_dir.joinpath(f"{input_file.stem}.jsonl")

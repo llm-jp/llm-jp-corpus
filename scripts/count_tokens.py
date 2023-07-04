@@ -22,7 +22,7 @@ def main() -> None:
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
     token_counts: dict[str, int] = {}
     for file_path in tqdm(data_dir.glob("*.parquet")):
-        dataset = Dataset.from_parquet(str(file_path))
+        dataset = Dataset.from_parquet(str(file_path), keep_in_memory=True)
         logger.info(f"Counting tokens in {file_path.stem}.")
         dataset.remove_columns(["text", "meta"])
         dataset = dataset.map(

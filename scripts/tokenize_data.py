@@ -67,7 +67,7 @@ def main() -> None:
             continue
 
         logger.info(f"Loading {input_file}.")
-        dataset: Dataset = Dataset.from_parquet(str(input_file))
+        dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
         logger.info("Tokenizing the dataset.")
         dataset = dataset.map(
             tokenize_function,
