@@ -1,11 +1,13 @@
-import json
 import logging
+import os
 import pathlib
 from argparse import ArgumentParser
 
-import tqdm
+from datasets import Dataset, disable_caching
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+disable_caching()
 
 
 def main() -> None:
@@ -18,14 +20,23 @@ def main() -> None:
     args = parser.parse_args()
 
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
-    for file_path in data_dir.glob("*.jsonl"):
-        token_count = 0
+    token_counts: dict[str, int] = {}
+    for file_path in tqdm(data_dir.glob("*.parquet")):
+        dataset = Dataset.from_parquet(str(file_path))
         logger.info(f"Counting tokens in {file_path.stem}.")
-        with file_path.open("r") as fin:
-            for line in tqdm.tqdm(fin.readlines()):
-                row: dict = json.loads(line)
-                token_count += len(row["tokens"])
+        dataset.remove_columns(["text", "meta"])
+        dataset = dataset.map(
+            lambda example: {
+                "num_tokens": len(example["tokens"]),
+            },
+            batched=False,
+            num_proc=os.cpu_count(),
+        )
+        token_count = sum(dataset["num_tokens"])
         logger.info(f"{file_path.stem} has {token_count:,} tokens.")
+        token_counts[file_path.stem] = token_count
+    logger.info(f"Total number of shards: {len(token_counts):,}.")
+    logger.info(f"Total number of tokens: {sum(token_counts.values()):,}.")
 
 
 if __name__ == "__main__":
