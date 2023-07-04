@@ -101,9 +101,11 @@ def main() -> None:
             )
             if output_file.exists() and not args.overwrite:
                 logger.error(
-                    f"{output_file} already exists. Specify --overwrite to continue."
+                    f"{output_file} already exists. Specify --overwrite to overwrite."
                 )
-                exit(1)
+                chunk_index += 1
+                continue
+
             Dataset.from_dict(batch).to_parquet(output_file)
             logger.info(
                 f"Finished writing the tokenized {split} split to {output_file}."

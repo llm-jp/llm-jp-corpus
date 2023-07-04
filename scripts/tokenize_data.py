@@ -52,9 +52,6 @@ def main() -> None:
 
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
-    if output_dir.exists() and not args.overwrite:
-        logger.warning(f"{output_dir} already exists. Specify --overwrite to continue.")
-        exit(1)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Initialize the tokenizer.")
@@ -63,6 +60,13 @@ def main() -> None:
 
     logger.info("Loading the dataset")
     for input_file in tqdm(data_dir.glob("*.parquet")):
+        output_file: pathlib.Path = output_dir.joinpath(input_file.name)
+        if output_file.exists() and not args.overwrite:
+            logger.error(
+                f"{output_file} already exists. Specify --overwrite to overwrite."
+            )
+            continue
+
         logger.info(f"Loading {input_file}.")
         dataset: Dataset = Dataset.from_parquet(str(input_file))
         logger.info("Tokenizing the dataset.")
@@ -75,12 +79,6 @@ def main() -> None:
         logger.info("Finished tokenizing the dataset.")
 
         logger.info(f"Writing the tokenized data to {output_dir}.")
-        output_file: pathlib.Path = output_dir.joinpath(input_file.name)
-        if output_file.exists() and not args.overwrite:
-            logger.error(
-                f"{output_file} already exists. Specify --overwrite to continue."
-            )
-            exit(1)
         dataset.to_parquet(output_file)
         logger.info(f"Finished writing the tokenized to {output_file}.")
 
