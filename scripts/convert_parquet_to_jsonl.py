@@ -16,7 +16,7 @@ def process_file(
     logger.info(f"Writing the dataset to {output_dir} in JSONL format.")
     output_file: pathlib.Path = output_dir.joinpath(f"{input_file.stem}.jsonl")
     if output_file.exists() and not overwrite:
-        logger.error(f"{output_file} already exists. Specify --overwrite to continue.")
+        logger.error(f"{output_file} already exists. Specify --overwrite to overwrite.")
         return
     dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
     dataset.to_json(output_file, force_ascii=False)
