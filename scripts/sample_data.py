@@ -5,10 +5,11 @@ from argparse import ArgumentParser
 from collections.abc import Generator
 from typing import Any, Union
 
-from datasets import Dataset
+from datasets import Dataset, disable_caching
 from datasets.splits import Split
 
 logger = logging.getLogger(__name__)
+disable_caching()
 
 
 def main() -> None:
