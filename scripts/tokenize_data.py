@@ -73,6 +73,7 @@ def main() -> None:
             tokenize_function,
             batched=True,
             batch_size=128,
+            keep_in_memory=True,
             num_proc=os.cpu_count(),
         )
         logger.info("Finished tokenizing the dataset.")

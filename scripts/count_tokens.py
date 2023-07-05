@@ -30,6 +30,7 @@ def main() -> None:
                 "num_tokens": len(example["tokens"]),
             },
             batched=False,
+            keep_in_memory=True,
             num_proc=os.cpu_count(),
         )
         token_count = sum(dataset["num_tokens"])

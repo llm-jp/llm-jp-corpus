@@ -66,7 +66,7 @@ def extract_examples(
         token_size if token_size > 0 else float("inf")
     )
     for input_file in input_files:
-        dataset: Dataset = Dataset.from_parquet(str(input_file))
+        dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
         for example in dataset:
             yield example
             num_tokens = len(example["tokens"])
