@@ -33,16 +33,17 @@ def main() -> None:
 
     logger.info("Loading the dataset")
     for input_file in tqdm(data_dir.glob("*.parquet")):
+        output_file: pathlib.Path = output_dir.joinpath(f"{input_file.stem}.jsonl")
+        if output_file.exists() and not args.overwrite:
+            logger.error(
+                f"{output_file} already exists. Specify --overwrite to overwrite."
+            )
+            continue
+
         logger.info(f"Loading {input_file}.")
         dataset: Dataset = Dataset.from_parquet(str(input_file))
 
         logger.info(f"Writing the dataset to {output_dir} in JSONL format.")
-        output_file: pathlib.Path = output_dir.joinpath(f"{input_file.stem}.jsonl")
-        if output_file.exists() and not args.overwrite:
-            logger.error(
-                f"{output_file} already exists. Specify --overwrite to continue."
-            )
-            exit(1)
         dataset.to_json(output_file, force_ascii=False)
         logger.info(f"Finished exporting to {output_file}.")
 

@@ -43,7 +43,9 @@ def main() -> None:
         output_file_name = f"{split}_sampled.jsonl"
         output_file = output_dir.joinpath(output_file_name)
         if output_file.exists() and not args.overwrite:
-            logger.warning(f"{output_file} already exists. Skip this file.")
+            logger.warning(
+                f"{output_file} already exists. Specify --overwrite to overwrite."
+            )
             continue
 
         input_files = sorted(data_dir.glob(f"{split}_*.parquet"))
