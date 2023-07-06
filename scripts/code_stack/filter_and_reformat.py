@@ -1,5 +1,5 @@
-import json
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -7,12 +7,11 @@ logger = logging.getLogger(__name__)
 DATASET_NAME = "bigcode/the-stack"
 
 
-def filter_and_reformat(line: str) -> dict:
-    row: dict = json.loads(line)
+def filter_and_reformat(example) -> dict[str, Any]:
     return {
-        "text": row["content"],
+        "text": example["content"],
         "meta": {
-            **{k: v for k, v in row.items() if k != "content"},
+            **{k: v for k, v in example.items() if k != "content"},
             "source": DATASET_NAME.split("/")[-1],
         },
     }

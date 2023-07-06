@@ -36,11 +36,11 @@ python filter_and_reformat_data.py code_stack --data_dir data/download/code_stac
 
 ```bash
 mkdir -p data/tokenize  # or create a corresponding symlink
-python tokenize_data.py --data_dir data/filter/ja_wiki --output_dir data/tokenize/ja_wiki
-python tokenize_data.py --data_dir data/filter/en_wiki --output_dir data/tokenize/en_wiki
-python tokenize_data.py --data_dir data/filter/ja_cc --output_dir data/tokenize/ja_cc
-python tokenize_data.py --data_dir data/filter/en_pile --output_dir data/tokenize/en_pile
-python tokenize_data.py --data_dir data/filter/code_stack --output_dir data/tokenize/code_stack
+python tokenize_data.py --data_dir data/filter/ja_wiki --output_dir data/tokenize/ja_wiki --sentencepiece_model ./spm.model
+python tokenize_data.py --data_dir data/filter/en_wiki --output_dir data/tokenize/en_wiki --sentencepiece_model ./spm.model
+python tokenize_data.py --data_dir data/filter/ja_cc --output_dir data/tokenize/ja_cc --sentencepiece_model ./spm.model
+python tokenize_data.py --data_dir data/filter/en_pile --output_dir data/tokenize/en_pile --sentencepiece_model ./spm.model
+python tokenize_data.py --data_dir data/filter/code_stack --output_dir data/tokenize/code_stack --sentencepiece_model ./spm.model
 ```
 
 ## Sampling the data
