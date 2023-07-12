@@ -2,13 +2,13 @@
 
 This repository contains a data recipe for the LLM-jp corpus.
 
-| Dataset        | Token Count |
-|----------------|-------------|
-| mC4 (ja)       | 159B        |
-| Wikipedia (ja) | 2B          |
-| Pile (en)      | 25B         |
-| Wikipedia (en) | 6B          |
-| Stack (code)   | 10B         |
+| Dataset        | Raw Example Count | Token Count     |
+|----------------|-------------------|-----------------|
+| mC4 (ja)       | 87,425,304        | 159,251,477,726 |
+| Wikipedia (ja) | 1,364,746         | 1,761,540,077   |
+| Pile (en)      | TBU               | TBU             |
+| Wikipedia (en) | 6,630,651         | 5,853,178,749   |
+| Stack (code)   | TBU               | TBU             |
 
 ## Data Preparation
 
