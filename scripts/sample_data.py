@@ -2,8 +2,14 @@ import json
 import logging
 import pathlib
 from argparse import ArgumentParser
+from collections.abc import Generator
+from typing import Any, Union
+
+from datasets import Dataset, disable_caching
+from datasets.splits import Split
 
 logger = logging.getLogger(__name__)
+disable_caching()
 
 
 def main() -> None:
@@ -33,41 +39,42 @@ def main() -> None:
 
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
-    for file_path in data_dir.glob("*.jsonl"):
-        output_file_name = f"{file_path.stem}_sampled.jsonl"
+    for split in (Split.TRAIN, Split.VALIDATION, Split.TEST):
+        logger.info(f"Extract data up to {args.token_size} tokens from {split} split.")
+        output_file_name = f"{split}_sampled.jsonl"
         output_file = output_dir.joinpath(output_file_name)
         if output_file.exists() and not args.overwrite:
-            logger.warning(f"{output_file} already exists. Skip this file.")
+            logger.warning(
+                f"{output_file} already exists. Specify --overwrite to overwrite."
+            )
             continue
 
-        if output_file.is_symlink():
-            output_file.unlink()
-
-        if args.token_size < 0:
-            logger.info(f"Create a symbolic link to {file_path}.")
-            # Create a symbolic link.
-            output_file.symlink_to(file_path)
+        input_files = sorted(data_dir.glob(f"{split}_*.parquet"))
+        if not input_files:
             continue
 
-        token_count: int = 0
-        rows: list[dict] = []
-        logger.info(f"Extract data with {args.token_size} tokens.")
-        with file_path.open("rt") as fin:
-            for line in fin:
-                row = json.loads(line)
-                token_count += len(row["tokens"].split())
-                if token_count > args.token_size:
-                    break
-                rows.append(row)
-            else:
-                logger.warning(
-                    f"The total number of tokens {token_count:,} was less than {args.token_size:,}."
-                )
+        examples = extract_examples(args.token_size, input_files)
 
-        with output_file.open("wt") as fout:
-            for row in rows:
-                fout.write(json.dumps(row, ensure_ascii=False) + "\n")
-            logger.info(f"Finished reformatting {file_path.stem}.")
+        with output_file.open(mode="wt") as fout:
+            for example in examples:
+                fout.write(json.dumps(example, ensure_ascii=False) + "\n")
+            logger.info(f"Finished extracting from {split} split.")
+
+
+def extract_examples(
+    token_size: int, input_files: list[pathlib.Path]
+) -> Generator[dict[str, Any], None, None]:
+    remaining_token_size: Union[int, float] = (
+        token_size if token_size > 0 else float("inf")
+    )
+    for input_file in input_files:
+        dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
+        for example in dataset:
+            yield example
+            num_tokens = len(example["tokens"])
+            remaining_token_size -= num_tokens
+            if remaining_token_size <= 0:
+                return
 
 
 if __name__ == "__main__":

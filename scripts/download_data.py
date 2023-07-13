@@ -1,18 +1,12 @@
 import argparse
+import json
 import logging
 import pathlib
 
-from code_stack.download import download as download_code_stack
-from en_pile.download import download as download_en_pile
-from en_wiki.download import download as download_en_wiki
-from ja_cc.download import download as download_ja_cc
-from ja_wiki.download import download as download_ja_wiki
+from datasets import load_dataset
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
-
-DATASET_NAME = "wikipedia"
-LANGUAGE = "ja"
-DUMP_DATE = "20230320"
 
 
 def main() -> None:
@@ -37,19 +31,56 @@ def main() -> None:
 
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     if output_dir.exists() and not args.overwrite:
-        raise FileExistsError(f"{output_dir} already exists.")
+        raise FileExistsError(
+            f"{output_dir} already exists. Specify --overwrite to overwrite."
+        )
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if args.DATASET_NAME == "ja_wiki":
-        download_ja_wiki(output_dir)
+        dataset = load_dataset(
+            "wikipedia",
+            language="ja",
+            date="20230320",
+            beam_runner="DirectRunner",
+        )
     elif args.DATASET_NAME == "en_wiki":
-        download_en_wiki(output_dir)
+        dataset = load_dataset(
+            "wikipedia",
+            language="en",
+            date="20230320",
+            beam_runner="DirectRunner",
+        )
     elif args.DATASET_NAME == "ja_cc":
-        download_ja_cc(output_dir)
+        dataset = load_dataset(
+            "mc4",
+            languages=["ja"],
+            streaming=True,
+        )
     elif args.DATASET_NAME == "en_pile":
-        download_en_pile(output_dir)
+        dataset = load_dataset(
+            "EleutherAI/pile",
+            streaming=True,
+        )
     elif args.DATASET_NAME == "code_stack":
-        download_code_stack(output_dir)
+        dataset = load_dataset(
+            "bigcode/the-stack",
+            streaming=True,
+        )
+    else:
+        raise ValueError(f"Unknown dataset: {args.DATASET_NAME}")
+
+    for split, ds in dataset.items():
+        file_path: pathlib.Path = output_dir.joinpath(f"{split}.jsonl")
+        num_examples: int = 0
+        for example in tqdm(ds):
+            num_examples += 1
+            with file_path.open(mode="a") as f:
+                json.dump(example, f, ensure_ascii=False)
+                f.write("\n")
+        logger.info(
+            f"Finished downloading the {split} split. "
+            f"There are total {num_examples} examples."
+        )
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-import json
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -8,13 +8,12 @@ LANGUAGE = "ja"
 DUMP_DATE = "20230320"
 
 
-def filter_and_reformat(line: str) -> dict:
-    row: dict = json.loads(line)
+def filter_and_reformat(example) -> dict[str, Any]:
     return {
-        "text": row["text"],
+        "text": example["text"],
         "meta": {
-            "title": row["title"],
-            "url": row["url"],
+            "title": example["title"],
+            "url": example["url"],
             "language": LANGUAGE,
             "timestamp": DUMP_DATE,
             "source": DATASET_NAME,

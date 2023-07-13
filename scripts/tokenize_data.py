@@ -1,24 +1,26 @@
-import json
 import logging
+import os
 import pathlib
+import time
 from argparse import ArgumentParser
-from multiprocessing import Pool
+from typing import Any
 
-import tqdm
-from transformers import AutoTokenizer, PreTrainedTokenizer
+import sentencepiece as spm
+from datasets import Dataset, disable_caching
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+disable_caching()
 
-tokenizer: PreTrainedTokenizer
+sentence_piece_processor: spm.SentencePieceProcessor
 
 
-def tokenize(line: str) -> dict:
-    row: dict = json.loads(line)
-    text = row["text"]
-    tokens = tokenizer.tokenize(text)
-    row["tokens"] = tokens
-    row["tokenizer_name"] = tokenizer.name_or_path
-    return row
+def tokenize_function(examples) -> dict[str, Any]:
+    return {
+        "tokens": [
+            sentence_piece_processor.encode_as_pieces(text) for text in examples["text"]
+        ],
+    }
 
 
 def main() -> None:
@@ -34,9 +36,9 @@ def main() -> None:
         help="Path to the output directory.",
     )
     parser.add_argument(
-        "--model_name",
+        "--sentencepiece_model",
         type=str,
-        default="cyberagent/open-calm-7b",  # TODO: Update the default model name.
+        required=True,
     )
     parser.add_argument(
         "--overwrite",
@@ -49,31 +51,41 @@ def main() -> None:
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    logger.info("Initialize the tokenizer.")
-    global tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    start_time = time.time()
 
-    logger.info(f"Tokenize the data in {args.data_dir}.")
-    for file_path in data_dir.glob("*.jsonl"):
-        output_file_name = f"{file_path.stem}_tokenized.jsonl"
-        output_file = output_dir.joinpath(output_file_name)
-        if output_dir.exists() and not args.overwrite:
-            logger.warning(f"{output_file} already exists. Skip this file.")
+    logger.info("Initialize the tokenizer.")
+    global sentence_piece_processor
+    sentence_piece_processor = spm.SentencePieceProcessor(args.sentencepiece_model)
+
+    logger.info("Loading the dataset")
+    for input_file in tqdm(data_dir.glob("*.parquet")):
+        output_file: pathlib.Path = output_dir.joinpath(input_file.name)
+        if output_file.exists() and not args.overwrite:
+            logger.error(
+                f"{output_file} already exists. Specify --overwrite to overwrite."
+            )
             continue
-        logger.info(f"Tokenizing {file_path.stem}.")
-        with file_path.open("r") as fin:
-            lines: list[str] = fin.readlines()
-            with Pool() as p:
-                rows: list[dict] = []
-                # Do not use imap_unordered because the order of the lines must
-                # be preserved for reproducibility.
-                for row in tqdm.tqdm(p.imap(tokenize, lines), total=len(lines)):
-                    rows.append(row)
-        logger.info(f"Writing the reformatted data to {output_file}.")
-        with output_file.open("wt") as fout:
-            for row in rows:
-                fout.write(json.dumps(row, ensure_ascii=False) + "\n")
-            logger.info(f"Finished reformatting {file_path.stem}.")
+
+        logger.info(f"Loading {input_file}.")
+        dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
+        logger.info("Tokenizing the dataset.")
+        dataset = dataset.map(
+            tokenize_function,
+            batched=True,
+            batch_size=128,
+            keep_in_memory=True,
+            num_proc=os.cpu_count(),
+        )
+        logger.info("Finished tokenizing the dataset.")
+
+        logger.info(f"Writing the tokenized data to {output_dir}.")
+        dataset.to_parquet(output_file)
+        logger.info(f"Finished writing the tokenized to {output_file}.")
+
+    end_time = time.time()
+    logger.info(
+        f"Finished tokenizing the dataset. Elapsed time: {end_time - start_time} [sec]"
+    )
 
 
 if __name__ == "__main__":
