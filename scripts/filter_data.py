@@ -12,6 +12,7 @@ from filters import (
     has_empty_text,
     has_valid_domain,
     reformat_builder,
+    remove_empty_parenthesis,
     remove_wikipedia_footnote,
 )
 
@@ -79,10 +80,12 @@ def main() -> None:
     if args.DATASET_NAME == "ja_wiki":
         map_fns.append(reformat_builder("text"))
         map_fns.append(remove_wikipedia_footnote)
+        map_fns.append(remove_empty_parenthesis)
         filter_fns.append(has_empty_text)
     elif args.DATASET_NAME == "en_wiki":
         map_fns.append(reformat_builder("text"))
         map_fns.append(remove_wikipedia_footnote)
+        map_fns.append(remove_empty_parenthesis)
         filter_fns.append(has_empty_text)
     elif args.DATASET_NAME == "ja_cc":
         map_fns.append(reformat_builder("text"))

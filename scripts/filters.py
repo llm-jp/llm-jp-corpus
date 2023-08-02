@@ -96,3 +96,8 @@ def remove_wikipedia_footnote(example: dict[str, Any]) -> dict[str, Any]:
     if m:
         example["text"] = example["text"][: m.start()]
     return example
+
+
+def remove_empty_parenthesis(example: dict[str, Any]) -> dict[str, Any]:
+    example["text"] = regex.sub(r"(（）|\s?\(\))", "", example["text"])
+    return example
