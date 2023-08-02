@@ -10,8 +10,11 @@ from datasets.splits import Split
 from filters import (
     extract_japanese_text,
     has_non_empty_text,
+    has_valid_alphanum_fraction,
+    has_valid_avg_line_length,
     has_valid_domain,
     has_valid_extension,
+    has_valid_max_line_length,
     reformat_builder,
     remove_empty_parenthesis,
     remove_wikipedia_footnote,
@@ -99,6 +102,9 @@ def main() -> None:
     elif args.DATASET_NAME == "code_stack":
         map_fns.append(reformat_builder("content"))
         filter_fns.append(has_valid_extension)
+        filter_fns.append(has_valid_max_line_length)
+        filter_fns.append(has_valid_avg_line_length)
+        filter_fns.append(has_valid_alphanum_fraction)
         filter_fns.append(has_non_empty_text)
     else:
         raise ValueError(f"Unknown dataset name: {args.DATASET_NAME}.")

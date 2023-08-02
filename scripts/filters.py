@@ -114,6 +114,21 @@ def has_valid_extension(example: dict[str, Any]) -> bool:
     return example["meta"]["ext"] in valid_extensions
 
 
+def has_valid_max_line_length(example: dict[str, Any]) -> bool:
+    # https://github.com/togethercomputer/RedPajama-Data/blob/main/data_prep/github/github_run_filter.py
+    return example["meta"]["max_line_length"] <= 1000
+
+
+def has_valid_avg_line_length(example: dict[str, Any]) -> bool:
+    # https://github.com/togethercomputer/RedPajama-Data/blob/main/data_prep/github/github_run_filter.py
+    return example["meta"]["avg_line_length"] <= 100
+
+
+def has_valid_alphanum_fraction(example: dict[str, Any]) -> bool:
+    # https://github.com/togethercomputer/RedPajama-Data/blob/main/data_prep/github/github_run_filter.py
+    return example["meta"]["alphanum_fraction"] >= 0.25
+
+
 def has_non_empty_text(example: dict[str, Any]) -> bool:
     return example["text"].strip() != ""
 
