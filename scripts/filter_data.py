@@ -12,6 +12,7 @@ from filters import (
     has_empty_text,
     has_valid_domain,
     reformat_builder,
+    remove_wikipedia_footnote,
 )
 
 logger = logging.getLogger(__name__)
@@ -77,9 +78,11 @@ def main() -> None:
     filter_fns: list[Callable[..., bool]] = []
     if args.DATASET_NAME == "ja_wiki":
         map_fns.append(reformat_builder("text"))
+        map_fns.append(remove_wikipedia_footnote)
         filter_fns.append(has_empty_text)
     elif args.DATASET_NAME == "en_wiki":
         map_fns.append(reformat_builder("text"))
+        map_fns.append(remove_wikipedia_footnote)
         filter_fns.append(has_empty_text)
     elif args.DATASET_NAME == "ja_cc":
         map_fns.append(reformat_builder("text"))

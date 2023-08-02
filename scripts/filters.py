@@ -69,3 +69,27 @@ def extract_japanese_text(example: dict[str, Any]) -> dict[str, Any]:
             valid += sentence
     example["text"] = valid
     return example
+
+
+def remove_wikipedia_footnote(example: dict[str, Any]) -> dict[str, Any]:
+    footnote_sections: list[str] = [
+        "脚注",
+        "関連項目",
+        "参照",
+        "外部リンク",
+        "参考文献",
+        "Footnotes",
+        "See also",
+        "Further reading",
+        "Bibliography",
+        "References",
+        "Notes",
+        "Citations",
+        "Sources",
+        "External links",
+    ]
+    footnote_pat = regex.compile(rf"\n({'|'.join(footnote_sections)})\s*\n")
+    m = footnote_pat.search(example["text"])
+    if m:
+        example["text"] = example["text"][: m.start()]
+    return example
