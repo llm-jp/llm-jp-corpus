@@ -1,6 +1,7 @@
 import json
 import logging
 import pathlib
+import random
 from argparse import ArgumentParser
 from collections.abc import Generator
 from typing import Any, Union
@@ -10,6 +11,8 @@ from datasets.splits import Split
 
 logger = logging.getLogger(__name__)
 disable_caching()
+
+random.seed(42)
 
 
 def main() -> None:
@@ -67,6 +70,7 @@ def extract_examples(
     remaining_token_size: Union[int, float] = (
         token_size if token_size > 0 else float("inf")
     )
+    random.shuffle(input_files)
     for input_file in input_files:
         dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
         for example in dataset:
