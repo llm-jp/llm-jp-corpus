@@ -160,6 +160,11 @@ def main() -> None:
 
     for map_fn in map_fns:
         dataset = dataset.map(map_fn, batched=False)
+    dataset = dataset.map(
+        remove_columns=list(
+            set(list(dataset["train"].take(1))[0].keys()) - {"text", "meta"}
+        )
+    )
     for filter_fn in filter_fns:
         dataset = dataset.filter(filter_fn)
 
