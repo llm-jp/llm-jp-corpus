@@ -72,7 +72,7 @@ def has_empty_text(example: dict[str, Any]) -> bool:
     return example["text"].strip() != ""
 
 
-def remove_non_japanese_text(example: dict[str, Any]) -> dict[str, Any]:
+def extract_japanese_text(example: dict[str, Any]) -> dict[str, Any]:
     ja_pat = regex.compile(r"[\p{Script=Hiragana}\p{Script=Katakana}ー]+")
     script_pat = regex.compile(
         r"[\u0000-\u007F\u0020-\u002F\u003A-\u0040\u005B-\u0060\u007B-\u007E]{100,}"
@@ -146,7 +146,7 @@ def main() -> None:
         filter_fns.append(has_empty_text)
     elif args.DATASET_NAME == "ja_cc":
         map_fns.append(reformat_builder("text"))
-        map_fns.append(remove_non_japanese_text)
+        map_fns.append(extract_japanese_text)
         filter_fns.append(has_valid_domain)
         filter_fns.append(has_empty_text)
     elif args.DATASET_NAME == "en_pile":
