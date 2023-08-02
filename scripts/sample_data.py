@@ -4,7 +4,7 @@ import pathlib
 import random
 from argparse import ArgumentParser
 from collections.abc import Generator
-from typing import Any, Union
+from typing import Any
 
 from datasets import Dataset, disable_caching
 from datasets.splits import Split
@@ -44,6 +44,12 @@ def main() -> None:
         default=50_000,
         help="Validation token size.",
     )
+    parser.add_argument(
+        "--interleave_steps",
+        type=int,
+        default=1_000,
+        help="Interleave steps to sample validation data.",
+    )
     args = parser.parse_args()
 
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
@@ -54,41 +60,41 @@ def main() -> None:
     )
     train_file = output_dir.joinpath("train.jsonl")
     valid_file = output_dir.joinpath("valid.jsonl")
-    if train_file.exists() and not args.overwrite:
-        logger.warning(
-            f"{train_file} already exists. Specify --overwrite to overwrite."
-        )
-        return
-    if valid_file.exists() and not args.overwrite:
-        logger.warning(
-            f"{valid_file} already exists. Specify --overwrite to overwrite."
-        )
+    if (train_file.exists() or valid_file.exists()) and not args.overwrite:
+        logger.warning("Already exists. Specify --overwrite to overwrite.")
         return
 
     input_files = sorted(data_dir.glob(f"{Split.TRAIN}_*.parquet"))
     if not input_files:
         return
 
-    with train_file.open(mode="wt") as fout:
-        for example in extract_examples(args.train_token_size, input_files):
-            fout.write(json.dumps(example, ensure_ascii=False) + "\n")
+    cur_train_token_size: int = 0
+    cur_valid_token_size: int = 0
+    with train_file.open("wt") as f_train, valid_file.open("wt") as f_valid:
+        for i, example in enumerate(iterate_examples(input_files)):
+            if (
+                i % args.interleave_steps == 0
+                and cur_valid_token_size < args.valid_token_size
+            ):
+                f_valid.write(json.dumps(example, ensure_ascii=False) + "\n")
+                cur_valid_token_size += len(example["tokens"])
+            else:
+                f_train.write(json.dumps(example, ensure_ascii=False) + "\n")
+                cur_train_token_size += len(example["tokens"])
+            if (
+                cur_train_token_size >= args.train_token_size
+                and cur_valid_token_size >= args.valid_token_size
+            ):
+                break
 
 
-def extract_examples(
-    token_size: int, input_files: list[pathlib.Path]
+def iterate_examples(
+    input_files: list[pathlib.Path],
 ) -> Generator[dict[str, Any], None, None]:
     random.shuffle(input_files)
-    remaining_token_size: Union[int, float] = (
-        token_size if token_size > 0 else float("inf")
-    )
     for input_file in input_files:
         dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
-        for example in dataset:
-            yield example
-            num_tokens = len(example["tokens"])
-            remaining_token_size -= num_tokens
-            if remaining_token_size <= 0:
-                return
+        yield from dataset
 
 
 if __name__ == "__main__":
