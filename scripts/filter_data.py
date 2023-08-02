@@ -79,28 +79,29 @@ def main() -> None:
         streaming=True,
     )
 
+    reformat_fn: Callable[..., dict[str, Any]]
     map_fns: list[Callable[..., dict[str, Any]]] = []
     filter_fns: list[Callable[..., bool]] = []
     if args.DATASET_NAME == "ja_wiki":
-        map_fns.append(reformat_builder("text"))
+        reformat_fn = reformat_builder("text")
         map_fns.append(remove_wikipedia_footnote)
         map_fns.append(remove_empty_parenthesis)
         filter_fns.append(has_non_empty_text)
     elif args.DATASET_NAME == "en_wiki":
-        map_fns.append(reformat_builder("text"))
+        reformat_fn = reformat_builder("text")
         map_fns.append(remove_wikipedia_footnote)
         map_fns.append(remove_empty_parenthesis)
         filter_fns.append(has_non_empty_text)
     elif args.DATASET_NAME == "ja_cc":
-        map_fns.append(reformat_builder("text"))
+        reformat_fn = reformat_builder("text")
         map_fns.append(extract_japanese_text)
         filter_fns.append(has_valid_domain)
         filter_fns.append(has_non_empty_text)
     elif args.DATASET_NAME == "en_pile":
-        map_fns.append(reformat_builder("text"))
+        reformat_fn = reformat_builder("text")
         filter_fns.append(has_non_empty_text)
     elif args.DATASET_NAME == "code_stack":
-        map_fns.append(reformat_builder("content"))
+        reformat_fn = reformat_builder("content")
         filter_fns.append(has_valid_extension)
         filter_fns.append(has_valid_max_line_length)
         filter_fns.append(has_valid_avg_line_length)
@@ -109,12 +110,13 @@ def main() -> None:
     else:
         raise ValueError(f"Unknown dataset name: {args.DATASET_NAME}.")
 
+    dataset = dataset.map(reformat_fn, batched=False)
+    columns = list(dataset["train"].take(1))[0].keys()
+    dataset = dataset.map(remove_columns=list(set(columns) - {"text", "meta"}))
     for filter_fn in filter_fns:
         dataset = dataset.filter(filter_fn)
     for map_fn in map_fns:
         dataset = dataset.map(map_fn, batched=False)
-    columns = list(dataset["train"].take(1))[0].keys()
-    dataset = dataset.map(remove_columns=list(set(columns) - {"text", "meta"}))
     dataset = dataset.filter(has_non_empty_text)
 
     logger.info(f"Writing the reformatted data to {output_dir}.")
