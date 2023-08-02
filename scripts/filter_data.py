@@ -113,11 +113,8 @@ def main() -> None:
         dataset = dataset.filter(filter_fn)
     for map_fn in map_fns:
         dataset = dataset.map(map_fn, batched=False)
-    dataset = dataset.map(
-        remove_columns=list(
-            set(list(dataset["train"].take(1))[0].keys()) - {"text", "meta"}
-        )
-    )
+    columns = list(dataset["train"].take(1))[0].keys()
+    dataset = dataset.map(remove_columns=list(set(columns) - {"text", "meta"}))
     dataset = dataset.filter(has_non_empty_text)
 
     logger.info(f"Writing the reformatted data to {output_dir}.")
