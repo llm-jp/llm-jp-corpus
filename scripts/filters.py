@@ -99,8 +99,12 @@ def remove_wikipedia_footnote(example: dict[str, Any]) -> dict[str, Any]:
 
 
 def remove_empty_parenthesis(example: dict[str, Any]) -> dict[str, Any]:
-    example["text"] = regex.sub(r"(（）|\s?\(\))", "", example["text"])
-    example["text"] = regex.sub(r"、+）", "）", example["text"])
-    example["text"] = regex.sub(r"（,\s+", "（", example["text"])
-    example["text"] = regex.sub(r"\s?\([\s,]*\)", "", example["text"])
+    # Japanese
+    example["text"] = regex.sub(r"（[\s,，、;；]*", "（", example["text"])
+    example["text"] = regex.sub(r"[\s,，、;；]*）", "）", example["text"])
+    example["text"] = regex.sub(r"（\s*）", "", example["text"])
+    # English
+    example["text"] = regex.sub(r"\([\s,;]*", "(", example["text"])
+    example["text"] = regex.sub(r"[\s,;]*\)", ")", example["text"])
+    example["text"] = regex.sub(r"\s?\(\s*\)", "", example["text"])
     return example
