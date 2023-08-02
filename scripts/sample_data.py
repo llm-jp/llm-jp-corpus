@@ -33,44 +33,54 @@ def main() -> None:
         help="Whether to overwrite the output directory.",
     )
     parser.add_argument(
-        "--token_size",
+        "--train_token_size",
         type=int,
         default=-1,
-        help="Token size (negative values mean no limit).",
+        help="Train token size (negative values mean no limit).",
+    )
+    parser.add_argument(
+        "--valid_token_size",
+        type=int,
+        default=50_000,
+        help="Validation token size.",
     )
     args = parser.parse_args()
 
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
-    for split in (Split.TRAIN, Split.VALIDATION, Split.TEST):
-        logger.info(f"Extract data up to {args.token_size} tokens from {split} split.")
-        output_file_name = f"{split}_sampled.jsonl"
-        output_file = output_dir.joinpath(output_file_name)
-        if output_file.exists() and not args.overwrite:
-            logger.warning(
-                f"{output_file} already exists. Specify --overwrite to overwrite."
-            )
-            continue
 
-        input_files = sorted(data_dir.glob(f"{split}_*.parquet"))
-        if not input_files:
-            continue
+    logger.info(
+        f"Extract data up to {args.train_token_size} tokens from {Split.TRAIN} split."
+    )
+    train_file = output_dir.joinpath("train.jsonl")
+    valid_file = output_dir.joinpath("valid.jsonl")
+    if train_file.exists() and not args.overwrite:
+        logger.warning(
+            f"{train_file} already exists. Specify --overwrite to overwrite."
+        )
+        return
+    if valid_file.exists() and not args.overwrite:
+        logger.warning(
+            f"{valid_file} already exists. Specify --overwrite to overwrite."
+        )
+        return
 
-        examples = extract_examples(args.token_size, input_files)
+    input_files = sorted(data_dir.glob(f"{Split.TRAIN}_*.parquet"))
+    if not input_files:
+        return
 
-        with output_file.open(mode="wt") as fout:
-            for example in examples:
-                fout.write(json.dumps(example, ensure_ascii=False) + "\n")
-            logger.info(f"Finished extracting from {split} split.")
+    with train_file.open(mode="wt") as fout:
+        for example in extract_examples(args.train_token_size, input_files):
+            fout.write(json.dumps(example, ensure_ascii=False) + "\n")
 
 
 def extract_examples(
     token_size: int, input_files: list[pathlib.Path]
 ) -> Generator[dict[str, Any], None, None]:
+    random.shuffle(input_files)
     remaining_token_size: Union[int, float] = (
         token_size if token_size > 0 else float("inf")
     )
-    random.shuffle(input_files)
     for input_file in input_files:
         dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
         for example in dataset:
