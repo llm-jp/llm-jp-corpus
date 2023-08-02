@@ -25,11 +25,11 @@ python download_data.py code_stack --output_dir data/download/code_stack
 
 ```bash
 mkdir -p data/filter  # or create a corresponding symlink
-python filter_and_reformat_data.py ja_wiki --data_dir data/download/ja_wiki --output_dir data/filter/ja_wiki
-python filter_and_reformat_data.py en_wiki --data_dir data/download/en_wiki --output_dir data/filter/en_wiki
-python filter_and_reformat_data.py ja_cc --data_dir data/download/ja_cc --output_dir data/filter/ja_cc
-python filter_and_reformat_data.py en_pile --data_dir data/download/en_pile --output_dir data/filter/en_pile
-python filter_and_reformat_data.py code_stack --data_dir data/download/code_stack --output_dir data/filter/code_stack
+python filter_data.py ja_wiki --data_dir data/download/ja_wiki --output_dir data/filter/ja_wiki
+python filter_data.py en_wiki --data_dir data/download/en_wiki --output_dir data/filter/en_wiki
+python filter_data.py ja_cc --data_dir data/download/ja_cc --output_dir data/filter/ja_cc
+python filter_data.py en_pile --data_dir data/download/en_pile --output_dir data/filter/en_pile
+python filter_data.py code_stack --data_dir data/download/code_stack --output_dir data/filter/code_stack
 ```
 
 ## Tokenizing the data
