@@ -1,4 +1,5 @@
 import typing
+from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlparse
 
@@ -129,8 +130,24 @@ def has_valid_alphanum_fraction(example: dict[str, Any]) -> bool:
     return example["meta"]["alphanum_fraction"] >= 0.25
 
 
-def is_non_empty(example: dict[str, Any]) -> bool:
+def is_not_empty(example: dict[str, Any]) -> bool:
     return example["text"].strip() != ""
+
+
+nsfw_words: list[str] = []
+with Path(__file__).parent.joinpath("nsfw_words/ja.txt").open() as f:
+    for line in f:
+        if not line.startswith("#"):
+            nsfw_words.append(line.strip())
+
+
+def is_ethical(example: dict[str, Any]) -> bool:
+    nsfw_word_count: int = 0
+    for word in nsfw_words:
+        nsfw_word_count += example["text"].count(word)
+        if nsfw_word_count >= 3:
+            return False
+    return True
 
 
 def extract_japanese_text(example: dict[str, Any]) -> dict[str, Any]:

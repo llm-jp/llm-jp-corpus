@@ -14,7 +14,8 @@ from filters import (
     has_valid_domain,
     has_valid_extension,
     has_valid_max_line_length,
-    is_non_empty,
+    is_ethical,
+    is_not_empty,
     reformat_builder,
     remove_empty_parenthesis,
     remove_wikipedia_footnote,
@@ -86,27 +87,28 @@ def main() -> None:
         reformat_fn = reformat_builder("text")
         map_fns.append(remove_wikipedia_footnote)
         map_fns.append(remove_empty_parenthesis)
-        filter_fns.append(is_non_empty)
+        filter_fns.append(is_not_empty)
     elif args.DATASET_NAME == "en_wiki":
         reformat_fn = reformat_builder("text")
         map_fns.append(remove_wikipedia_footnote)
         map_fns.append(remove_empty_parenthesis)
-        filter_fns.append(is_non_empty)
+        filter_fns.append(is_not_empty)
     elif args.DATASET_NAME == "ja_cc":
         reformat_fn = reformat_builder("text")
         map_fns.append(extract_japanese_text)
         filter_fns.append(has_valid_domain)
-        filter_fns.append(is_non_empty)
+        filter_fns.append(is_not_empty)
+        filter_fns.append(is_ethical)
     elif args.DATASET_NAME == "en_pile":
         reformat_fn = reformat_builder("text")
-        filter_fns.append(is_non_empty)
+        filter_fns.append(is_not_empty)
     elif args.DATASET_NAME == "code_stack":
         reformat_fn = reformat_builder("content")
         filter_fns.append(has_valid_extension)
         filter_fns.append(has_valid_max_line_length)
         filter_fns.append(has_valid_avg_line_length)
         filter_fns.append(has_valid_alphanum_fraction)
-        filter_fns.append(is_non_empty)
+        filter_fns.append(is_not_empty)
     else:
         raise ValueError(f"Unknown dataset name: {args.DATASET_NAME}.")
 
@@ -117,7 +119,7 @@ def main() -> None:
         dataset = dataset.filter(filter_fn)
     for map_fn in map_fns:
         dataset = dataset.map(map_fn, batched=False)
-    dataset = dataset.filter(is_non_empty)
+    dataset = dataset.filter(is_not_empty)
 
     logger.info(f"Writing the reformatted data to {output_dir}.")
     for split, ds in dataset.items():
