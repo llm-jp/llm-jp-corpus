@@ -178,14 +178,11 @@ def main() -> None:
                 continue
 
             Dataset.from_dict(batch).to_parquet(output_file)
-            logger.info(
-                f"Finished writing the reformatted {split} split to {output_file}."
-            )
             chunk_index += 1
 
     end_time = time.time()
     logger.info(
-        f"Finished tokenizing the dataset. Elapsed time: {end_time - start_time} [sec]"
+        f"Finished processing the dataset. Elapsed time: {end_time - start_time} [sec]"
     )
 
 
