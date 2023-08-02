@@ -15,10 +15,13 @@ disable_caching()
 sentence_piece_processor: spm.SentencePieceProcessor
 
 
-def tokenize_function(examples) -> dict[str, Any]:
+def tokenize_function(examples: dict[str, Any]) -> dict[str, Any]:
     return {
         "tokens": [
             sentence_piece_processor.encode_as_pieces(text) for text in examples["text"]
+        ],
+        "token_ids": [
+            sentence_piece_processor.encode_as_ids(text) for text in examples["text"]
         ],
     }
 
