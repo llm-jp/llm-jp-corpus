@@ -75,9 +75,12 @@ def remove_wikipedia_footnote(example: dict[str, Any]) -> dict[str, Any]:
     footnote_sections: list[str] = [
         "脚注",
         "関連項目",
+        "日本国内の関連項目",
+        "出典・脚注",
         "参照",
         "外部リンク",
         "参考文献",
+        "その他関連事項",
         "Footnotes",
         "See also",
         "Further reading",
