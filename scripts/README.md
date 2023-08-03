@@ -50,6 +50,6 @@ mkdir -p data/sample  # or create a corresponding symlink
 python sample_data.py --data_dir data/tokenize/ja_wiki --output_dir data/sample --train_token_size -1 --valid_token_size 50000
 python sample_data.py --data_dir data/tokenize/en_wiki --output_dir data/sample --train_token_size -1 --valid_token_size 50000
 python sample_data.py --data_dir data/tokenize/ja_cc --output_dir data/sample --train_token_size -1 --valid_token_size 2400000
-python sample_data.py --data_dir data/tokenize/en_pile --output_dir data/sample --train_token_size 25000000000 --valid_token_size 250000
-python sample_data.py --data_dir data/tokenize/code_stack --output_dir data/sample --train_token_size 10000000000 --valid_token_size 250000
+python sample_data.py --data_dir data/tokenize/en_pile --output_dir data/sample --train_token_size 155000000000 --valid_token_size 250000
+python sample_data.py --data_dir data/tokenize/code_stack --output_dir data/sample --train_token_size 161000000000 --valid_token_size 250000
 ```
