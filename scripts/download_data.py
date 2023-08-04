@@ -20,7 +20,7 @@ def main() -> None:
     parser.add_argument(
         "--output_dir",
         type=str,
-        help="Path to the wikipedia data directory.",
+        help="Path to the output data directory.",
     )
     parser.add_argument(
         "--overwrite",

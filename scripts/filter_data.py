@@ -53,7 +53,7 @@ def main() -> None:
     parser.add_argument(
         "--data_dir",
         type=str,
-        help="Path to the wikipedia data directory.",
+        help="Path to the data directory.",
     )
     parser.add_argument(
         "--output_dir",
