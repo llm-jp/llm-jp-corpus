@@ -34,4 +34,4 @@ filter:
 download:
 	python download_data.py \
 	$(CORPUS) \
-	--output_dir $(FILTER_DIR) \
+	--output_dir $(DOWNLOAD_DIR) \
