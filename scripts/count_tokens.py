@@ -17,6 +17,12 @@ def main() -> None:
         type=str,
         help="Path to the wikipedia data directory.",
     )
+    parser.add_argument(
+        "--num_proc",
+        type=int,
+        default=-1,
+        help="Number of processes for parallel execution.",
+    )
     args = parser.parse_args()
 
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
@@ -24,15 +30,16 @@ def main() -> None:
     for file_path in tqdm(data_dir.glob("*.parquet")):
         dataset = Dataset.from_parquet(str(file_path), keep_in_memory=True)
         logger.info(f"Counting tokens in {file_path.stem}.")
-        dataset.remove_columns(["text", "meta"])
-        dataset = dataset.map(
-            lambda example: {
-                "num_tokens": len(example["tokens"]),
-            },
-            batched=False,
-            keep_in_memory=True,
-            num_proc=os.cpu_count(),
-        )
+        if "num_tokens" not in dataset.column_names:
+            dataset.remove_columns(["text", "meta"])
+            dataset = dataset.map(
+                lambda example: {
+                    "num_tokens": len(example["tokens"]),
+                },
+                batched=False,
+                keep_in_memory=True,
+                num_proc=os.cpu_count() if args.num_proc == -1 else args.num_proc,
+            )
         token_count = sum(dataset["num_tokens"])
         logger.info(f"{file_path.stem} has {token_count:,} tokens.")
         token_counts[file_path.stem] = token_count
