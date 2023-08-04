@@ -18,7 +18,7 @@ TOKENIZE_DIR := $(DATA_DIR)/$(VERSION)/tokenize/$(CORPUS)
 .PHONY: tokenize
 tokenize:
 	python tokenize_data.py \
-	--data_dir $(FILTER_DIR) \
+	--input_path $(FILTER_DIR) \
 	--output_dir $(TOKENIZE_DIR) \
 	--sentencepiece_model $(SENTENCEPIECE_MODEL) \
 	--num_proc $(NUM_PROC) \
