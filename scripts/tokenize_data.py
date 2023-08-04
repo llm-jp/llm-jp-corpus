@@ -22,6 +22,7 @@ def tokenize_function(examples: dict[str, Any]) -> dict[str, Any]:
     return {
         "tokens": [sentence_piece_processor.id_to_piece(ids) for ids in token_ids],
         "token_ids": token_ids,
+        "num_tokens": [len(ids) for ids in token_ids],
     }
 
 
