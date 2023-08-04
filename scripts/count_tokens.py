@@ -36,7 +36,6 @@ def main() -> None:
             dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
             logger.info(f"Counting tokens in {input_file.stem}.")
             if "num_tokens" not in dataset.column_names:
-                dataset.remove_columns(["text", "meta"])
                 dataset = dataset.map(
                     lambda example: {
                         "num_tokens": len(example["tokens"]),
@@ -45,6 +44,7 @@ def main() -> None:
                     keep_in_memory=True,
                     num_proc=os.cpu_count() if args.num_proc == -1 else args.num_proc,
                 )
+                dataset.to_parquet(input_file)
             token_count = sum(dataset["num_tokens"])
             logger.info(f"{input_file.stem} has {token_count:,} tokens.")
             token_counts[input_file.stem] = token_count
