@@ -47,6 +47,12 @@ def main() -> None:
         action="store_true",
         help="Whether to overwrite the output directory.",
     )
+    parser.add_argument(
+        "--num_proc",
+        type=int,
+        default=-1,
+        help="Number of processes for parallel execution.",
+    )
     args = parser.parse_args()
 
     data_dir: pathlib.Path = pathlib.Path(args.data_dir)
@@ -76,7 +82,7 @@ def main() -> None:
             batched=True,
             batch_size=128,
             keep_in_memory=True,
-            num_proc=os.cpu_count(),
+            num_proc=os.cpu_count() if args.num_proc == -1 else args.num_proc,
         )
         logger.info("Finished tokenizing the dataset.")
 

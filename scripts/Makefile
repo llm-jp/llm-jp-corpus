@@ -3,6 +3,7 @@ VERSION := v1.0.1
 # ja_wiki, ja_cc, en_wiki, en_pile, code_stack
 CORPUS := ja_wiki
 SENTENCEPIECE_MODEL := ./code20k_en40k_ja80k.ver2.model
+NUM_PROC := 64
 EXT := parquet
 
 SHELL := /bin/bash
@@ -20,6 +21,7 @@ tokenize:
 	--data_dir $(FILTER_DIR) \
 	--output_dir $(TOKENIZE_DIR) \
 	--sentencepiece_model $(SENTENCEPIECE_MODEL) \
+	--num_proc $(NUM_PROC) \
 
 .PHONY: filter
 filter:
