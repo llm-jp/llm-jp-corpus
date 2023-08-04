@@ -26,9 +26,10 @@ def process_file(
 def main() -> None:
     parser = ArgumentParser()
     parser.add_argument(
-        "--data_dir",
+        "--input_path",
         type=str,
-        help="Path to the data directory.",
+        nargs="+",
+        help="Path(s) to the input data directory or file.",
     )
     parser.add_argument(
         "--output_dir",
@@ -48,13 +49,17 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    data_dir: pathlib.Path = pathlib.Path(args.data_dir)
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with ProcessPoolExecutor(max_workers=args.num_proc) as executor:
-        for input_file in tqdm(data_dir.glob("*.parquet")):
-            executor.submit(process_file, input_file, output_dir, args.overwrite)
+        for path_str in tqdm(args.input_path):
+            path = pathlib.Path(path_str)
+            if path.exists() is False:
+                logger.warning(f"{path} not found and skipped")
+                continue
+            for input_file in tqdm(path.glob("*.parquet") if path.is_dir() else [path]):
+                executor.submit(process_file, input_file, output_dir, args.overwrite)
 
 
 if __name__ == "__main__":
