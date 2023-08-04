@@ -40,14 +40,14 @@ def main() -> None:
         dataset = load_dataset(
             "wikipedia",
             language="ja",
-            date="20230801",
+            date="20230720",
             beam_runner="DirectRunner",
         )
     elif args.DATASET_NAME == "en_wiki":
         dataset = load_dataset(
             "wikipedia",
             language="en",
-            date="20230801",
+            date="20230720",
             beam_runner="DirectRunner",
         )
     elif args.DATASET_NAME == "ja_cc":
