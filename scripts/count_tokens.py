@@ -13,9 +13,10 @@ disable_caching()
 def main() -> None:
     parser = ArgumentParser()
     parser.add_argument(
-        "--data_dir",
+        "--input_path",
         type=str,
-        help="Path to the data directory.",
+        nargs="+",
+        help="Path(s) to the input data directory or file.",
     )
     parser.add_argument(
         "--num_proc",
@@ -25,24 +26,28 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    data_dir: pathlib.Path = pathlib.Path(args.data_dir)
     token_counts: dict[str, int] = {}
-    for file_path in tqdm(data_dir.glob("*.parquet")):
-        dataset = Dataset.from_parquet(str(file_path), keep_in_memory=True)
-        logger.info(f"Counting tokens in {file_path.stem}.")
-        if "num_tokens" not in dataset.column_names:
-            dataset.remove_columns(["text", "meta"])
-            dataset = dataset.map(
-                lambda example: {
-                    "num_tokens": len(example["tokens"]),
-                },
-                batched=False,
-                keep_in_memory=True,
-                num_proc=os.cpu_count() if args.num_proc == -1 else args.num_proc,
-            )
-        token_count = sum(dataset["num_tokens"])
-        logger.info(f"{file_path.stem} has {token_count:,} tokens.")
-        token_counts[file_path.stem] = token_count
+    for path_str in tqdm(args.input_path):
+        path = pathlib.Path(path_str)
+        if path.exists() is False:
+            logger.warning(f"{path} not found and skipped")
+            continue
+        for input_file in tqdm(path.glob("*.parquet") if path.is_dir() else [path]):
+            dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
+            logger.info(f"Counting tokens in {input_file.stem}.")
+            if "num_tokens" not in dataset.column_names:
+                dataset.remove_columns(["text", "meta"])
+                dataset = dataset.map(
+                    lambda example: {
+                        "num_tokens": len(example["tokens"]),
+                    },
+                    batched=False,
+                    keep_in_memory=True,
+                    num_proc=os.cpu_count() if args.num_proc == -1 else args.num_proc,
+                )
+            token_count = sum(dataset["num_tokens"])
+            logger.info(f"{input_file.stem} has {token_count:,} tokens.")
+            token_counts[input_file.stem] = token_count
     logger.info(f"Total number of shards: {len(token_counts):,}.")
     logger.info(f"Total number of tokens: {sum(token_counts.values()):,}.")
 
