@@ -2,6 +2,10 @@
 
 This repository contains scripts to reproduce the LLM-jp corpus.
 
+## Number of Tokens
+
+- v1.0.0
+
 | Dataset        | Token Count |
 |----------------|-------------|
 | mC4 (ja)       | 159B        |
@@ -9,6 +13,16 @@ This repository contains scripts to reproduce the LLM-jp corpus.
 | Pile (en)      | 25B         |
 | Wikipedia (en) | 6B          |
 | Stack (code)   | 10B         |
+
+- v1.0.1
+
+| Dataset        | Token Count |
+|----------------|-------------|
+| mC4 (ja)       | TBW B       |
+| Wikipedia (ja) | 1.5B        |
+| Pile (en)      | TBW B       |
+| Wikipedia (en) | TBW B       |
+| Stack (code)   | TBW B       |
 
 ## Data Preparation
 
