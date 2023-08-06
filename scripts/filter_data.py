@@ -42,6 +42,49 @@ def get_data_files(search_dir: pathlib.Path, ext: str) -> dict[Split, pathlib.Pa
     return data_files
 
 
+def reformat_and_filter_dataset(dataset: Dataset, dataset_name: str) -> Dataset:
+    reformat_fn: Callable[..., dict[str, Any]]
+    map_fns: list[Callable[..., dict[str, Any]]] = []
+    filter_fns: list[Callable[..., bool]] = []
+    if dataset_name == "ja_wiki":
+        reformat_fn = reformat_builder("text")
+        map_fns.append(remove_wikipedia_footnote)
+        map_fns.append(remove_empty_parenthesis)
+        filter_fns.append(is_not_empty)
+    elif dataset_name == "en_wiki":
+        reformat_fn = reformat_builder("text")
+        map_fns.append(remove_wikipedia_footnote)
+        map_fns.append(remove_empty_parenthesis)
+        filter_fns.append(is_not_empty)
+    elif dataset_name == "ja_cc":
+        reformat_fn = reformat_builder("text")
+        map_fns.append(extract_japanese_text)
+        filter_fns.append(has_valid_domain)
+        filter_fns.append(is_not_empty)
+        filter_fns.append(is_ethical)
+    elif dataset_name == "en_pile":
+        reformat_fn = reformat_builder("text")
+        filter_fns.append(is_not_empty)
+    elif dataset_name == "code_stack":
+        reformat_fn = reformat_builder("content")
+        filter_fns.append(has_valid_extension)
+        filter_fns.append(has_valid_max_line_length)
+        filter_fns.append(has_valid_avg_line_length)
+        filter_fns.append(has_valid_alphanum_fraction)
+        filter_fns.append(is_not_empty)
+    else:
+        raise ValueError(f"Unknown dataset name: {dataset_name}.")
+
+    dataset = dataset.map(reformat_fn, batched=False)
+    columns = list(dataset["train"].take(1))[0].keys()
+    dataset = dataset.map(remove_columns=list(set(columns) - {"text", "meta"}))
+    for filter_fn in filter_fns:
+        dataset = dataset.filter(filter_fn)
+    for map_fn in map_fns:
+        dataset = dataset.map(map_fn, batched=False)
+    return dataset.filter(is_not_empty)
+
+
 def main() -> None:
     parser = ArgumentParser()
     parser.add_argument(
@@ -80,46 +123,7 @@ def main() -> None:
         streaming=True,
     )
 
-    reformat_fn: Callable[..., dict[str, Any]]
-    map_fns: list[Callable[..., dict[str, Any]]] = []
-    filter_fns: list[Callable[..., bool]] = []
-    if args.DATASET_NAME == "ja_wiki":
-        reformat_fn = reformat_builder("text")
-        map_fns.append(remove_wikipedia_footnote)
-        map_fns.append(remove_empty_parenthesis)
-        filter_fns.append(is_not_empty)
-    elif args.DATASET_NAME == "en_wiki":
-        reformat_fn = reformat_builder("text")
-        map_fns.append(remove_wikipedia_footnote)
-        map_fns.append(remove_empty_parenthesis)
-        filter_fns.append(is_not_empty)
-    elif args.DATASET_NAME == "ja_cc":
-        reformat_fn = reformat_builder("text")
-        map_fns.append(extract_japanese_text)
-        filter_fns.append(has_valid_domain)
-        filter_fns.append(is_not_empty)
-        filter_fns.append(is_ethical)
-    elif args.DATASET_NAME == "en_pile":
-        reformat_fn = reformat_builder("text")
-        filter_fns.append(is_not_empty)
-    elif args.DATASET_NAME == "code_stack":
-        reformat_fn = reformat_builder("content")
-        filter_fns.append(has_valid_extension)
-        filter_fns.append(has_valid_max_line_length)
-        filter_fns.append(has_valid_avg_line_length)
-        filter_fns.append(has_valid_alphanum_fraction)
-        filter_fns.append(is_not_empty)
-    else:
-        raise ValueError(f"Unknown dataset name: {args.DATASET_NAME}.")
-
-    dataset = dataset.map(reformat_fn, batched=False)
-    columns = list(dataset["train"].take(1))[0].keys()
-    dataset = dataset.map(remove_columns=list(set(columns) - {"text", "meta"}))
-    for filter_fn in filter_fns:
-        dataset = dataset.filter(filter_fn)
-    for map_fn in map_fns:
-        dataset = dataset.map(map_fn, batched=False)
-    dataset = dataset.filter(is_not_empty)
+    dataset = reformat_and_filter_dataset(dataset, args.DATASET_NAME)
 
     logger.info(f"Writing the reformatted data to {output_dir}.")
     for split, ds in dataset.items():
