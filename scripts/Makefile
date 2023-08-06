@@ -4,6 +4,8 @@ VERSION := v1.0.1
 CORPUS := ja_wiki
 SENTENCEPIECE_MODEL := ./code20k_en40k_ja80k.ver2.model
 NUM_PROC := 64
+TRAIN_TOKEN_SIZE := -1
+VALID_TOKEN_SIZE := 1M
 EXT := parquet
 
 SHELL := /bin/bash
@@ -11,6 +13,7 @@ SHELL := /bin/bash
 DOWNLOAD_DIR := $(DATA_DIR)/$(VERSION)/download/$(CORPUS)
 FILTER_DIR := $(DATA_DIR)/$(VERSION)/filter/$(CORPUS)
 TOKENIZE_DIR := $(DATA_DIR)/$(VERSION)/tokenize/$(CORPUS)
+SAMPLE_DIR := $(DATA_DIR)/$(VERSION)/sample/$(CORPUS)
 
 # FILTERED_FILES := $(wildcard $(FILTER_DIR)/*.$(EXT)
 # TOKENIZED_FILES := $(patsubst $(FILTER_DIR)/%.$(EXT),$(TOKENIZE_DIR)/%.$(EXT),$(FILTERED_FILES))
@@ -35,3 +38,11 @@ download:
 	python download_data.py \
 	$(CORPUS) \
 	--output_dir $(DOWNLOAD_DIR) \
+
+.PHONY: sample
+sample:
+	python sample_data.py \
+	--input_path $(TOKENIZE_DIR) \
+	--output_dir $(SAMPLE_DIR) \
+	--train_token_size $(TRAIN_TOKEN_SIZE) \
+	--valid_token_size $(VALID_TOKEN_SIZE) \
