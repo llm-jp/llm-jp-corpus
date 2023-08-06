@@ -16,9 +16,9 @@ sentence_piece_processor: spm.SentencePieceProcessor
 
 
 def tokenize_examples(examples: dict[str, Any]) -> dict[str, Any]:
-    token_ids: list[list[int]] = [
-        sentence_piece_processor.encode_as_ids(text) for text in examples["text"]
-    ]
+    token_ids: list[list[int]] = sentence_piece_processor.encode_as_ids(
+        examples["text"]
+    )
     return {
         "tokens": [sentence_piece_processor.id_to_piece(ids) for ids in token_ids],
         "token_ids": token_ids,
