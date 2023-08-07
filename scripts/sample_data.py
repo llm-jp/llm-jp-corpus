@@ -46,12 +46,6 @@ def main() -> None:
         default="1M",
         help="Validation token size.",
     )
-    parser.add_argument(
-        "--interleave_steps",
-        type=str,
-        default="1K",
-        help="Interleave steps to sample validation data.",
-    )
     args = parser.parse_args()
 
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
@@ -59,11 +53,9 @@ def main() -> None:
 
     train_token_size: Union[int, float] = canonicalize_number(args.train_token_size)
     valid_token_size = canonicalize_number(args.valid_token_size)
-    interleave_steps = canonicalize_number(args.interleave_steps)
     if train_token_size < 0:
         train_token_size = float("inf")
     assert valid_token_size > 0
-    assert interleave_steps > 0
     logger.info(f"Extract train data up to {train_token_size} tokens")
     logger.info(f"Extract valid data up to {valid_token_size} tokens")
 
@@ -100,30 +92,34 @@ def main() -> None:
             cur_valid_token_size += sum(dataset_split["test"]["num_tokens"])
 
         # Save the data.
-        if len(buff_train_dataset) >= CHUNK_SIZE:
+        while len(buff_train_dataset) >= CHUNK_SIZE:
             output_file = output_dir / f"{Split.TRAIN}_{train_chunk_index}.parquet"
             if output_file.exists() and not args.overwrite:
                 logger.error(
                     f"{output_file} already exists. Specify --overwrite to overwrite."
                 )
             else:
-                buff_train_dataset.select(range(0, CHUNK_SIZE)).to_parquet(output_file)
+                buff_train_dataset.select(
+                    range(0, CHUNK_SIZE), keep_in_memory=True
+                ).to_parquet(output_file)
             train_chunk_index += 1
             buff_train_dataset = buff_train_dataset.select(
-                range(CHUNK_SIZE, len(buff_train_dataset))
+                range(CHUNK_SIZE, len(buff_train_dataset)), keep_in_memory=True
             )
 
-        if len(buff_valid_dataset) >= CHUNK_SIZE:
+        while len(buff_valid_dataset) >= CHUNK_SIZE:
             output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
             if output_file.exists() and not args.overwrite:
                 logger.error(
                     f"{output_file} already exists. Specify --overwrite to overwrite."
                 )
             else:
-                buff_valid_dataset.select(range(0, CHUNK_SIZE)).to_parquet(output_file)
+                buff_valid_dataset.select(
+                    range(0, CHUNK_SIZE), keep_in_memory=True
+                ).to_parquet(output_file)
             valid_chunk_index += 1
             buff_valid_dataset = buff_valid_dataset.select(
-                range(CHUNK_SIZE, len(buff_valid_dataset))
+                range(CHUNK_SIZE, len(buff_valid_dataset)), keep_in_memory=True
             )
 
         if (
@@ -133,29 +129,31 @@ def main() -> None:
             break
 
     if len(buff_train_dataset):
+        assert len(buff_train_dataset) < CHUNK_SIZE
         output_file = output_dir / f"{Split.TRAIN}_{train_chunk_index}.parquet"
         if output_file.exists() and not args.overwrite:
             logger.error(
                 f"{output_file} already exists. Specify --overwrite to overwrite."
             )
         else:
-            Dataset.from_dict(buff_train_dataset[:CHUNK_SIZE]).to_parquet(output_file)
+            Dataset.from_dict(buff_train_dataset).to_parquet(output_file)
 
     if len(buff_valid_dataset):
+        assert len(buff_valid_dataset) < CHUNK_SIZE
         output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
         if output_file.exists() and not args.overwrite:
             logger.error(
                 f"{output_file} already exists. Specify --overwrite to overwrite."
             )
         else:
-            Dataset.from_dict(buff_valid_dataset[:CHUNK_SIZE]).to_parquet(output_file)
+            Dataset.from_dict(buff_valid_dataset).to_parquet(output_file)
     logger.info(f"Finished extracting train data of {cur_train_token_size} tokens.")
     logger.info(f"Finished extracting valid data of {cur_valid_token_size} tokens.")
 
 
 def canonicalize_number(number: str) -> int:
     if number.endswith("k") or number.endswith("K"):
-        return int(number[:-1]) * 1000
+        return int(number[:-1]) * 1_000
     elif number.endswith("M"):
         return int(number[:-1]) * 1_000_000
     elif number.endswith("B") or number.endswith("G"):
