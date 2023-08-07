@@ -108,10 +108,10 @@ def main() -> None:
                 )
             else:
                 buff_train_dataset.select(range(0, CHUNK_SIZE)).to_parquet(output_file)
-                train_chunk_index += 1
-                buff_train_dataset = buff_train_dataset.select(
-                    range(CHUNK_SIZE, len(buff_train_dataset))
-                )
+            train_chunk_index += 1
+            buff_train_dataset = buff_train_dataset.select(
+                range(CHUNK_SIZE, len(buff_train_dataset))
+            )
 
         if len(buff_valid_dataset) >= CHUNK_SIZE:
             output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
@@ -121,10 +121,10 @@ def main() -> None:
                 )
             else:
                 buff_valid_dataset.select(range(0, CHUNK_SIZE)).to_parquet(output_file)
-                valid_chunk_index += 1
-                buff_valid_dataset = buff_valid_dataset.select(
-                    range(CHUNK_SIZE, len(buff_valid_dataset))
-                )
+            valid_chunk_index += 1
+            buff_valid_dataset = buff_valid_dataset.select(
+                range(CHUNK_SIZE, len(buff_valid_dataset))
+            )
 
         if (
             cur_train_token_size >= train_token_size
