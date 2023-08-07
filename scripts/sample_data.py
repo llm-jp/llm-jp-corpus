@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from typing import Any, Union
 
 from datasets import Dataset, disable_caching
+from datasets.splits import Split
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -95,7 +96,7 @@ def main() -> None:
             cur_train_token_size += num_tokens
 
         if len(buff_train_examples) >= CHUNK_SIZE:
-            output_file = output_dir / f"train_{train_chunk_index}.parquet"
+            output_file = output_dir / f"{Split.TRAIN}_{train_chunk_index}.parquet"
             if output_file.exists() and not args.overwrite:
                 logger.error(
                     f"{output_file} already exists. Specify --overwrite to overwrite."
@@ -105,7 +106,7 @@ def main() -> None:
             train_chunk_index += 1
             buff_train_examples = []
         if len(buff_valid_examples) >= CHUNK_SIZE:
-            output_file = output_dir / f"valid_{valid_chunk_index}.parquet"
+            output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
             if output_file.exists() and not args.overwrite:
                 logger.error(
                     f"{output_file} already exists. Specify --overwrite to overwrite."
@@ -122,7 +123,7 @@ def main() -> None:
             break
 
     if buff_train_examples:
-        output_file = output_dir / f"train_{train_chunk_index}.parquet"
+        output_file = output_dir / f"{Split.TRAIN}_{train_chunk_index}.parquet"
         if output_file.exists() and not args.overwrite:
             logger.error(
                 f"{output_file} already exists. Specify --overwrite to overwrite."
@@ -130,13 +131,15 @@ def main() -> None:
         else:
             Dataset.from_list(buff_train_examples).to_parquet(output_file)
     if buff_valid_examples:
-        output_file = output_dir / f"valid_{valid_chunk_index}.parquet"
+        output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
         if output_file.exists() and not args.overwrite:
             logger.error(
                 f"{output_file} already exists. Specify --overwrite to overwrite."
             )
         else:
             Dataset.from_list(buff_valid_examples).to_parquet(output_file)
+    logger.info(f"Finished extracting train data of {cur_train_token_size} tokens.")
+    logger.info(f"Finished extracting valid data of {cur_valid_token_size} tokens.")
 
 
 def canonicalize_number(number: str) -> int:
