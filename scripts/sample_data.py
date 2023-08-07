@@ -45,7 +45,7 @@ def main() -> None:
     parser.add_argument(
         "--valid_token_size",
         type=str,
-        default="1M",
+        default="10M",
         help="Validation token size.",
     )
     parser.add_argument(

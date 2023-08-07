@@ -5,7 +5,7 @@ CORPUS := ja_wiki
 SENTENCEPIECE_MODEL := ./code20k_en40k_ja80k.ver2.model
 NUM_PROC := 64
 TRAIN_TOKEN_SIZE := -1
-VALID_TOKEN_SIZE := 1M
+VALID_TOKEN_SIZE := 10M
 EXT := parquet
 
 SHELL := /bin/bash
