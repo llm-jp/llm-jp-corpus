@@ -148,8 +148,8 @@ def main() -> None:
             )
         else:
             buff_valid_dataset.to_parquet(output_file)
-    logger.info(f"Finished extracting train data of {cur_train_token_size} tokens.")
-    logger.info(f"Finished extracting valid data of {cur_valid_token_size} tokens.")
+    logger.info(f"Finished extracting train data of {cur_train_token_size:,} tokens.")
+    logger.info(f"Finished extracting valid data of {cur_valid_token_size:,} tokens.")
 
 
 def canonicalize_number(number: str) -> int:
