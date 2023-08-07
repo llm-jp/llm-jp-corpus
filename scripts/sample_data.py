@@ -131,6 +131,8 @@ def main() -> None:
             )
         else:
             Dataset.from_list(buff_valid_examples).to_parquet(output_file)
+    logger.info(f"Finished extracting train data of {cur_train_token_size} tokens.")
+    logger.info(f"Finished extracting valid data of {cur_valid_token_size} tokens.")
 
 
 def canonicalize_number(number: str) -> int:
