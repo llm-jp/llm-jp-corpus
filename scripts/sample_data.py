@@ -14,6 +14,8 @@ disable_caching()
 random.seed(42)
 
 CHUNK_SIZE = 100_000
+# This value should be as large as possible but no greater than the value in the respective corpus.
+NUM_TOKENS_PER_EXAMPLE = 500
 
 
 def main() -> None:
@@ -46,6 +48,13 @@ def main() -> None:
         default="1M",
         help="Validation token size.",
     )
+    parser.add_argument(
+        "--output_format",
+        type=str,
+        default="jsonl",
+        choices=["jsonl", "parquet"],
+        help="Output format.",
+    )
     args = parser.parse_args()
 
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
@@ -64,6 +73,10 @@ def main() -> None:
         return
     random.shuffle(input_files)
 
+    num_valid_examples_per_shard = int(
+        valid_token_size / len(input_files) / NUM_TOKENS_PER_EXAMPLE
+    )
+
     cur_train_token_size: int = 0
     cur_valid_token_size: int = 0
     buff_train_dataset: Dataset = Dataset.from_dict({})
@@ -73,50 +86,54 @@ def main() -> None:
     output_file: pathlib.Path
     for input_file in input_files:
         dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
-        if cur_valid_token_size >= valid_token_size:
-            # Use all the data for training.
-            buff_train_dataset = concatenate_datasets([buff_train_dataset, dataset])
-            cur_train_token_size += sum(dataset["num_tokens"])
-        else:
-            # Use 50 examples of the data for validation.
+        if cur_valid_token_size < valid_token_size:
             dataset_split: DatasetDict = dataset.train_test_split(
-                test_size=50, shuffle=True, seed=42
+                test_size=num_valid_examples_per_shard, shuffle=True, seed=42
             )
+            train_dataset = dataset_split[Split.TRAIN]
+            valid_dataset = dataset_split[Split.TEST]
+        else:
+            # Use all the data for training.
+            train_dataset = dataset
+            valid_dataset = Dataset.from_dict({})
+        if cur_train_token_size < train_token_size:
             buff_train_dataset = concatenate_datasets(
-                [buff_train_dataset, dataset_split["train"]]
+                [buff_train_dataset, train_dataset]
             )
+            cur_train_token_size += sum(train_dataset["num_tokens"])
+        if cur_valid_token_size < valid_token_size:
             buff_valid_dataset = concatenate_datasets(
-                [buff_valid_dataset, dataset_split["test"]]
+                [buff_valid_dataset, valid_dataset]
             )
-            cur_train_token_size += sum(dataset_split["train"]["num_tokens"])
-            cur_valid_token_size += sum(dataset_split["test"]["num_tokens"])
+            cur_valid_token_size += sum(valid_dataset["num_tokens"])
 
         # Save the data.
         while len(buff_train_dataset) >= CHUNK_SIZE:
-            output_file = output_dir / f"{Split.TRAIN}_{train_chunk_index}.parquet"
-            if output_file.exists() and not args.overwrite:
-                logger.error(
-                    f"{output_file} already exists. Specify --overwrite to overwrite."
-                )
-            else:
-                buff_train_dataset.select(
-                    range(0, CHUNK_SIZE), keep_in_memory=True
-                ).to_parquet(output_file)
+            output_file = (
+                output_dir / f"{Split.TRAIN}_{train_chunk_index}.{args.output_format}"
+            )
+            save_dataset(
+                buff_train_dataset.select(range(0, CHUNK_SIZE), keep_in_memory=True),
+                output_file,
+                args.overwrite,
+                args.output_format,
+            )
             train_chunk_index += 1
             buff_train_dataset = buff_train_dataset.select(
                 range(CHUNK_SIZE, len(buff_train_dataset)), keep_in_memory=True
             )
 
         while len(buff_valid_dataset) >= CHUNK_SIZE:
-            output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
-            if output_file.exists() and not args.overwrite:
-                logger.error(
-                    f"{output_file} already exists. Specify --overwrite to overwrite."
-                )
-            else:
-                buff_valid_dataset.select(
-                    range(0, CHUNK_SIZE), keep_in_memory=True
-                ).to_parquet(output_file)
+            output_file = (
+                output_dir
+                / f"{Split.VALIDATION}_{valid_chunk_index}.{args.output_format}"
+            )
+            save_dataset(
+                buff_valid_dataset.select(range(0, CHUNK_SIZE), keep_in_memory=True),
+                output_file,
+                args.overwrite,
+                args.output_format,
+            )
             valid_chunk_index += 1
             buff_valid_dataset = buff_valid_dataset.select(
                 range(CHUNK_SIZE, len(buff_valid_dataset)), keep_in_memory=True
@@ -130,22 +147,20 @@ def main() -> None:
 
     if len(buff_train_dataset):
         assert len(buff_train_dataset) < CHUNK_SIZE
-        output_file = output_dir / f"{Split.TRAIN}_{train_chunk_index}.parquet"
-        if output_file.exists() and not args.overwrite:
-            logger.error(
-                f"{output_file} already exists. Specify --overwrite to overwrite."
-            )
-        else:
-            buff_train_dataset.to_parquet(output_file)
+        output_file = (
+            output_dir / f"{Split.TRAIN}_{train_chunk_index}.{args.output_format}"
+        )
+        save_dataset(
+            buff_train_dataset, output_file, args.overwrite, args.output_format
+        )
     if len(buff_valid_dataset):
         assert len(buff_valid_dataset) < CHUNK_SIZE
-        output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
-        if output_file.exists() and not args.overwrite:
-            logger.error(
-                f"{output_file} already exists. Specify --overwrite to overwrite."
-            )
-        else:
-            buff_valid_dataset.to_parquet(output_file)
+        output_file = (
+            output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.{args.output_format}"
+        )
+        save_dataset(
+            buff_valid_dataset, output_file, args.overwrite, args.output_format
+        )
     logger.info(f"Finished extracting train data of {cur_train_token_size:,} tokens.")
     logger.info(f"Finished extracting valid data of {cur_valid_token_size:,} tokens.")
 
@@ -170,6 +185,19 @@ def list_input_files(input_paths: list[str]) -> Iterator[pathlib.Path]:
             logger.warning(f"{path} not found and skipped")
             continue
         yield from path.glob("*.parquet") if path.is_dir() else [path]
+
+
+def save_dataset(
+    dataset: Dataset, output_file: pathlib.Path, overwrite: bool, format: str
+) -> None:
+    if output_file.exists() and not overwrite:
+        logger.error(f"{output_file} already exists. Specify --overwrite to overwrite.")
+        return
+    if format == "jsonl":
+        dataset.to_json(output_file, force_ascii=False)
+    else:
+        assert format == "parquet"
+        dataset.to_parquet(output_file)
 
 
 if __name__ == "__main__":
