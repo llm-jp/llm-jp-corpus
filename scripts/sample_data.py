@@ -1,14 +1,12 @@
 import logging
 import pathlib
 import random
-import typing
 from argparse import ArgumentParser
 from collections.abc import Iterator
-from typing import Any, Union
+from typing import Union
 
-from datasets import Dataset, disable_caching
+from datasets import Dataset, DatasetDict, concatenate_datasets, disable_caching
 from datasets.splits import Split
-from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 disable_caching()
@@ -54,12 +52,6 @@ def main() -> None:
         default="1K",
         help="Interleave steps to sample validation data.",
     )
-    parser.add_argument(
-        "--num_proc",
-        type=int,
-        default=1,
-        help="Number of processes to use.",
-    )
     args = parser.parse_args()
 
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
@@ -78,43 +70,61 @@ def main() -> None:
     input_files = sorted(list_input_files(args.input_path))
     if not input_files:
         return
+    random.shuffle(input_files)
 
     cur_train_token_size: int = 0
     cur_valid_token_size: int = 0
-    buff_train_examples = []
-    buff_valid_examples = []
+    buff_train_dataset: Dataset = Dataset.from_dict({})
+    buff_valid_dataset: Dataset = Dataset.from_dict({})
     train_chunk_index: int = 0
     valid_chunk_index: int = 0
     output_file: pathlib.Path
-    for i, example in tqdm(enumerate(iterate_examples(input_files, args.num_proc))):
-        num_tokens = example.get("num_tokens", len(example["tokens"]))
-        if i % interleave_steps == 0 and cur_valid_token_size < valid_token_size:
-            buff_valid_examples.append(example)
-            cur_valid_token_size += num_tokens
-        elif cur_train_token_size < train_token_size:
-            buff_train_examples.append(example)
-            cur_train_token_size += num_tokens
+    for input_file in input_files:
+        dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
+        if cur_valid_token_size >= valid_token_size:
+            # Use all the data for training.
+            buff_train_dataset = concatenate_datasets([buff_train_dataset, dataset])
+            cur_train_token_size += sum(dataset["num_tokens"])
+        else:
+            # Use 0.1% of the data for validation.
+            dataset_split: DatasetDict = dataset.train_test_split(
+                test_size=0.001, shuffle=True, seed=42
+            )
+            buff_train_dataset = concatenate_datasets(
+                [buff_train_dataset, dataset_split["train"]]
+            )
+            buff_valid_dataset = concatenate_datasets(
+                [buff_valid_dataset, dataset_split["test"]]
+            )
+            cur_train_token_size += sum(dataset_split["train"]["num_tokens"])
+            cur_valid_token_size += sum(dataset_split["test"]["num_tokens"])
 
-        if len(buff_train_examples) >= CHUNK_SIZE:
+        # Save the data.
+        if len(buff_train_dataset) >= CHUNK_SIZE:
             output_file = output_dir / f"{Split.TRAIN}_{train_chunk_index}.parquet"
             if output_file.exists() and not args.overwrite:
                 logger.error(
                     f"{output_file} already exists. Specify --overwrite to overwrite."
                 )
             else:
-                Dataset.from_list(buff_train_examples).to_parquet(output_file)
-            train_chunk_index += 1
-            buff_train_examples = []
-        if len(buff_valid_examples) >= CHUNK_SIZE:
+                buff_train_dataset.select(range(0, CHUNK_SIZE)).to_parquet(output_file)
+                train_chunk_index += 1
+                buff_train_dataset = buff_train_dataset.select(
+                    range(CHUNK_SIZE, len(buff_train_dataset))
+                )
+
+        if len(buff_valid_dataset) >= CHUNK_SIZE:
             output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
             if output_file.exists() and not args.overwrite:
                 logger.error(
                     f"{output_file} already exists. Specify --overwrite to overwrite."
                 )
             else:
-                Dataset.from_list(buff_valid_examples).to_parquet(output_file)
-            valid_chunk_index += 1
-            buff_valid_examples = []
+                buff_valid_dataset.select(range(0, CHUNK_SIZE)).to_parquet(output_file)
+                valid_chunk_index += 1
+                buff_valid_dataset = buff_valid_dataset.select(
+                    range(CHUNK_SIZE, len(buff_valid_dataset))
+                )
 
         if (
             cur_train_token_size >= train_token_size
@@ -122,22 +132,23 @@ def main() -> None:
         ):
             break
 
-    if buff_train_examples:
+    if len(buff_train_dataset):
         output_file = output_dir / f"{Split.TRAIN}_{train_chunk_index}.parquet"
         if output_file.exists() and not args.overwrite:
             logger.error(
                 f"{output_file} already exists. Specify --overwrite to overwrite."
             )
         else:
-            Dataset.from_list(buff_train_examples).to_parquet(output_file)
-    if buff_valid_examples:
+            Dataset.from_dict(buff_train_dataset[:CHUNK_SIZE]).to_parquet(output_file)
+
+    if len(buff_valid_dataset):
         output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
         if output_file.exists() and not args.overwrite:
             logger.error(
                 f"{output_file} already exists. Specify --overwrite to overwrite."
             )
         else:
-            Dataset.from_list(buff_valid_examples).to_parquet(output_file)
+            Dataset.from_dict(buff_valid_dataset[:CHUNK_SIZE]).to_parquet(output_file)
     logger.info(f"Finished extracting train data of {cur_train_token_size} tokens.")
     logger.info(f"Finished extracting valid data of {cur_valid_token_size} tokens.")
 
@@ -162,16 +173,6 @@ def list_input_files(input_paths: list[str]) -> Iterator[pathlib.Path]:
             logger.warning(f"{path} not found and skipped")
             continue
         yield from path.glob("*.parquet") if path.is_dir() else [path]
-
-
-def iterate_examples(
-    input_files: list[pathlib.Path], num_proc: typing.Optional[int] = None
-) -> Iterator[dict[str, Any]]:
-    random.shuffle(input_files)
-    dataset: Dataset = Dataset.from_parquet(
-        input_files, keep_in_memory=True, num_proc=num_proc
-    )
-    yield from dataset
 
 
 if __name__ == "__main__":
