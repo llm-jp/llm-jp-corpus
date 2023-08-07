@@ -1,6 +1,7 @@
 import logging
 import pathlib
 import random
+import typing
 from argparse import ArgumentParser
 from collections.abc import Iterator
 from typing import Any, Union
@@ -52,6 +53,12 @@ def main() -> None:
         default="1K",
         help="Interleave steps to sample validation data.",
     )
+    parser.add_argument(
+        "--num_proc",
+        type=int,
+        default=1,
+        help="Number of processes to use.",
+    )
     args = parser.parse_args()
 
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
@@ -78,7 +85,7 @@ def main() -> None:
     train_chunk_index: int = 0
     valid_chunk_index: int = 0
     output_file: pathlib.Path
-    for i, example in tqdm(enumerate(iterate_examples(input_files))):
+    for i, example in tqdm(enumerate(iterate_examples(input_files, args.num_proc))):
         num_tokens = example.get("num_tokens", len(example["tokens"]))
         if i % interleave_steps == 0 and cur_valid_token_size < valid_token_size:
             buff_valid_examples.append(example)
@@ -154,11 +161,14 @@ def list_input_files(input_paths: list[str]) -> Iterator[pathlib.Path]:
         yield from path.glob("*.parquet") if path.is_dir() else [path]
 
 
-def iterate_examples(input_files: list[pathlib.Path]) -> Iterator[dict[str, Any]]:
+def iterate_examples(
+    input_files: list[pathlib.Path], num_proc: typing.Optional[int] = None
+) -> Iterator[dict[str, Any]]:
     random.shuffle(input_files)
-    for input_file in input_files:
-        dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
-        yield from dataset
+    dataset: Dataset = Dataset.from_parquet(
+        input_files, keep_in_memory=True, num_proc=num_proc
+    )
+    yield from dataset
 
 
 if __name__ == "__main__":
