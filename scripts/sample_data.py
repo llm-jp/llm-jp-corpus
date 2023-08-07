@@ -78,9 +78,9 @@ def main() -> None:
             buff_train_dataset = concatenate_datasets([buff_train_dataset, dataset])
             cur_train_token_size += sum(dataset["num_tokens"])
         else:
-            # Use 0.1% of the data for validation.
+            # Use 50 examples of the data for validation.
             dataset_split: DatasetDict = dataset.train_test_split(
-                test_size=0.001, shuffle=True, seed=42
+                test_size=50, shuffle=True, seed=42
             )
             buff_train_dataset = concatenate_datasets(
                 [buff_train_dataset, dataset_split["train"]]
@@ -136,8 +136,7 @@ def main() -> None:
                 f"{output_file} already exists. Specify --overwrite to overwrite."
             )
         else:
-            Dataset.from_dict(buff_train_dataset).to_parquet(output_file)
-
+            buff_train_dataset.to_parquet(output_file)
     if len(buff_valid_dataset):
         assert len(buff_valid_dataset) < CHUNK_SIZE
         output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
@@ -146,9 +145,9 @@ def main() -> None:
                 f"{output_file} already exists. Specify --overwrite to overwrite."
             )
         else:
-            Dataset.from_dict(buff_valid_dataset).to_parquet(output_file)
-    logger.info(f"Finished extracting train data of {cur_train_token_size} tokens.")
-    logger.info(f"Finished extracting valid data of {cur_valid_token_size} tokens.")
+            buff_valid_dataset.to_parquet(output_file)
+    logger.info(f"Finished extracting train data of {cur_train_token_size:,} tokens.")
+    logger.info(f"Finished extracting valid data of {cur_valid_token_size:,} tokens.")
 
 
 def canonicalize_number(number: str) -> int:
