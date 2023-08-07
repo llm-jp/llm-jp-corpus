@@ -86,9 +86,9 @@ def main() -> None:
             buff_train_dataset = concatenate_datasets([buff_train_dataset, dataset])
             cur_train_token_size += sum(dataset["num_tokens"])
         else:
-            # Use 100 examples of the data for validation.
+            # Use 50 examples of the data for validation.
             dataset_split: DatasetDict = dataset.train_test_split(
-                test_size=100, shuffle=True, seed=42
+                test_size=50, shuffle=True, seed=42
             )
             buff_train_dataset = concatenate_datasets(
                 [buff_train_dataset, dataset_split["train"]]
