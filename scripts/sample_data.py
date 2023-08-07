@@ -139,8 +139,7 @@ def main() -> None:
                 f"{output_file} already exists. Specify --overwrite to overwrite."
             )
         else:
-            Dataset.from_dict(buff_train_dataset[:CHUNK_SIZE]).to_parquet(output_file)
-
+            buff_train_dataset.to_parquet(output_file)
     if len(buff_valid_dataset):
         output_file = output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.parquet"
         if output_file.exists() and not args.overwrite:
@@ -148,7 +147,7 @@ def main() -> None:
                 f"{output_file} already exists. Specify --overwrite to overwrite."
             )
         else:
-            Dataset.from_dict(buff_valid_dataset[:CHUNK_SIZE]).to_parquet(output_file)
+            buff_valid_dataset.to_parquet(output_file)
     logger.info(f"Finished extracting train data of {cur_train_token_size} tokens.")
     logger.info(f"Finished extracting valid data of {cur_valid_token_size} tokens.")
 
