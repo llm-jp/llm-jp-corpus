@@ -20,6 +20,13 @@ def main() -> None:
         help="Path(s) to the input data directory or file.",
     )
     parser.add_argument(
+        "--input_format",
+        type=str,
+        default="parquet",
+        choices=["jsonl", "parquet"],
+        help="Input format.",
+    )
+    parser.add_argument(
         "--num_proc",
         type=int,
         default=-1,
@@ -27,7 +34,9 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    input_files: list[pathlib.Path] = sorted(list_input_files(args.input_path))
+    input_files: list[pathlib.Path] = sorted(
+        list_input_files(args.input_path, args.input_format)
+    )
 
     token_counts: dict[str, int] = {}
     for input_file in tqdm(input_files):
