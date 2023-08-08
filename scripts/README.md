@@ -25,11 +25,11 @@ python download_data.py code_stack --output_dir data/download/code_stack
 
 ```bash
 mkdir -p data/filter  # or create a corresponding symlink
-python filter_data.py ja_wiki --data_dir data/download/ja_wiki --output_dir data/filter/ja_wiki
-python filter_data.py en_wiki --data_dir data/download/en_wiki --output_dir data/filter/en_wiki
-python filter_data.py ja_cc --data_dir data/download/ja_cc --output_dir data/filter/ja_cc
-python filter_data.py en_pile --data_dir data/download/en_pile --output_dir data/filter/en_pile
-python filter_data.py code_stack --data_dir data/download/code_stack --output_dir data/filter/code_stack
+python filter_data.py ja_wiki --input_dir data/download/ja_wiki --output_dir data/filter/ja_wiki
+python filter_data.py en_wiki --input_dir data/download/en_wiki --output_dir data/filter/en_wiki
+python filter_data.py ja_cc --input_dir data/download/ja_cc --output_dir data/filter/ja_cc
+python filter_data.py en_pile --input_dir data/download/en_pile --output_dir data/filter/en_pile
+python filter_data.py code_stack --input_dir data/download/code_stack --output_dir data/filter/code_stack
 ```
 
 ## Tokenizing the data
@@ -47,9 +47,9 @@ python tokenize_data.py --input_path data/filter/code_stack --output_dir data/to
 
 ```bash
 mkdir -p data/sample  # or create a corresponding symlink
-python sample_data.py --data_dir data/tokenize/ja_wiki --output_dir data/sample --train_token_size -1 --valid_token_size 50000
-python sample_data.py --data_dir data/tokenize/en_wiki --output_dir data/sample --train_token_size -1 --valid_token_size 50000
-python sample_data.py --data_dir data/tokenize/ja_cc --output_dir data/sample --train_token_size -1 --valid_token_size 2400000
-python sample_data.py --data_dir data/tokenize/en_pile --output_dir data/sample --train_token_size 155000000000 --valid_token_size 250000
-python sample_data.py --data_dir data/tokenize/code_stack --output_dir data/sample --train_token_size 161000000000 --valid_token_size 250000
+python sample_data.py --input_path data/tokenize/ja_wiki --output_dir data/sample --train_token_size -1 --valid_token_size 50000
+python sample_data.py --input_path data/tokenize/en_wiki --output_dir data/sample --train_token_size -1 --valid_token_size 50000
+python sample_data.py --input_path data/tokenize/ja_cc --output_dir data/sample --train_token_size -1 --valid_token_size 2400000
+python sample_data.py --input_path data/tokenize/en_pile --output_dir data/sample --train_token_size -1 --valid_token_size 250000
+python sample_data.py --input_path data/tokenize/code_stack --output_dir data/sample --train_token_size -1 --valid_token_size 250000
 ```
