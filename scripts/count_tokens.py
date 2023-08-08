@@ -39,6 +39,7 @@ def main() -> None:
     )
 
     token_counts: dict[str, int] = {}
+    example_count: int = 0
     for input_file in tqdm(input_files):
         logger.info(f"Loading dataset from {input_file}.")
         dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
@@ -56,7 +57,9 @@ def main() -> None:
         token_count = sum(dataset["num_tokens"])
         logger.info(f"{input_file.stem} has {token_count:,} tokens.")
         token_counts[input_file.stem] = token_count
+        example_count += len(dataset)
     logger.info(f"Total number of shards: {len(token_counts):,}.")
+    logger.info(f"Total number of examples: {example_count:,}.")
     logger.info(f"Total number of tokens: {sum(token_counts.values()):,}.")
 
 
