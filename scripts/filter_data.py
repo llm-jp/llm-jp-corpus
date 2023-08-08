@@ -94,7 +94,7 @@ def main() -> None:
         help="Dataset name",
     )
     parser.add_argument(
-        "--data_dir",
+        "--input_dir",
         type=str,
         help="Path to the data directory.",
     )
@@ -110,7 +110,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    data_dir: pathlib.Path = pathlib.Path(args.data_dir)
+    input_dir: pathlib.Path = pathlib.Path(args.input_dir)
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -119,7 +119,7 @@ def main() -> None:
     logger.info("Loading the dataset")
     dataset: IterableDatasetDict = load_dataset(
         "json",
-        data_files={k: str(v) for k, v in get_data_files(data_dir, "jsonl").items()},
+        data_files={k: str(v) for k, v in get_data_files(input_dir, "jsonl").items()},
         streaming=True,
     )
 
