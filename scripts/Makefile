@@ -30,7 +30,7 @@ tokenize:
 filter:
 	python filter_data.py \
 	$(CORPUS) \
-	--data_dir $(DOWNLOAD_DIR) \
+	--input_dir $(DOWNLOAD_DIR) \
 	--output_dir $(FILTER_DIR) \
 
 .PHONY: download
