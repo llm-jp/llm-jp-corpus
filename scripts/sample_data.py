@@ -79,9 +79,7 @@ def main() -> None:
 
     cur_train_token_size: int = 0
     cur_valid_token_size: int = 0
-    buff_train_dataset: Dataset = Dataset.from_dict({})
     buff_valid_dataset: Dataset = Dataset.from_dict({})
-    train_chunk_index: int = 0
     valid_chunk_index: int = 0
     output_file: pathlib.Path
     for input_file in input_files:
@@ -97,8 +95,12 @@ def main() -> None:
             train_dataset = dataset
             valid_dataset = Dataset.from_dict({})
         if cur_train_token_size < train_token_size:
-            buff_train_dataset = concatenate_datasets(
-                [buff_train_dataset, train_dataset]
+            output_file = output_dir / f"{input_file.stem}.{args.output_format}"
+            save_dataset(
+                train_dataset,
+                output_file,
+                args.overwrite,
+                args.output_format,
             )
             cur_train_token_size += sum(train_dataset["num_tokens"])
         if cur_valid_token_size < valid_token_size:
@@ -108,21 +110,6 @@ def main() -> None:
             cur_valid_token_size += sum(valid_dataset["num_tokens"])
 
         # Save the data.
-        while len(buff_train_dataset) >= CHUNK_SIZE:
-            output_file = (
-                output_dir / f"{Split.TRAIN}_{train_chunk_index}.{args.output_format}"
-            )
-            save_dataset(
-                buff_train_dataset.select(range(0, CHUNK_SIZE), keep_in_memory=True),
-                output_file,
-                args.overwrite,
-                args.output_format,
-            )
-            train_chunk_index += 1
-            buff_train_dataset = buff_train_dataset.select(
-                range(CHUNK_SIZE, len(buff_train_dataset)), keep_in_memory=True
-            )
-
         while len(buff_valid_dataset) >= CHUNK_SIZE:
             output_file = (
                 output_dir
@@ -145,14 +132,6 @@ def main() -> None:
         ):
             break
 
-    if len(buff_train_dataset):
-        assert len(buff_train_dataset) < CHUNK_SIZE
-        output_file = (
-            output_dir / f"{Split.TRAIN}_{train_chunk_index}.{args.output_format}"
-        )
-        save_dataset(
-            buff_train_dataset, output_file, args.overwrite, args.output_format
-        )
     if len(buff_valid_dataset):
         assert len(buff_valid_dataset) < CHUNK_SIZE
         output_file = (
