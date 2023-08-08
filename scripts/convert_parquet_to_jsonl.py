@@ -1,11 +1,11 @@
 import logging
 import pathlib
 from argparse import ArgumentParser
-from collections.abc import Iterator
 from concurrent.futures import ProcessPoolExecutor
 
 from datasets import Dataset, disable_caching
 from tqdm import tqdm
+from utils import list_input_files
 
 logger = logging.getLogger(__name__)
 disable_caching()
@@ -56,15 +56,6 @@ def main() -> None:
     with ProcessPoolExecutor(max_workers=args.num_proc) as executor:
         for input_file in tqdm(list_input_files(args.input_path)):
             executor.submit(process_file, input_file, output_dir, args.overwrite)
-
-
-def list_input_files(input_paths: list[str]) -> Iterator[pathlib.Path]:
-    for path_str in input_paths:
-        path = pathlib.Path(path_str)
-        if path.exists() is False:
-            logger.warning(f"{path} not found and skipped")
-            continue
-        yield from path.glob("*.parquet") if path.is_dir() else [path]
 
 
 if __name__ == "__main__":

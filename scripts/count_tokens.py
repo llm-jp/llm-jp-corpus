@@ -2,10 +2,10 @@ import logging
 import os
 import pathlib
 from argparse import ArgumentParser
-from collections.abc import Iterator
 
 from datasets import Dataset, disable_caching
 from tqdm import tqdm
+from utils import list_input_files
 
 logger = logging.getLogger(__name__)
 disable_caching()
@@ -27,7 +27,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    input_files = sorted(list_input_files(args.input_path))
+    input_files: list[pathlib.Path] = sorted(list_input_files(args.input_path))
 
     token_counts: dict[str, int] = {}
     for input_file in tqdm(input_files):
@@ -49,15 +49,6 @@ def main() -> None:
         token_counts[input_file.stem] = token_count
     logger.info(f"Total number of shards: {len(token_counts):,}.")
     logger.info(f"Total number of tokens: {sum(token_counts.values()):,}.")
-
-
-def list_input_files(input_paths: list[str]) -> Iterator[pathlib.Path]:
-    for path_str in input_paths:
-        path = pathlib.Path(path_str)
-        if path.exists() is False:
-            logger.warning(f"{path} not found and skipped")
-            continue
-        yield from path.glob("*.parquet") if path.is_dir() else [path]
 
 
 if __name__ == "__main__":

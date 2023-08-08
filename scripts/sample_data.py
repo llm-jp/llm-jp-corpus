@@ -2,11 +2,11 @@ import logging
 import pathlib
 import random
 from argparse import ArgumentParser
-from collections.abc import Iterator
 from typing import Union
 
 from datasets import Dataset, DatasetDict, disable_caching
 from datasets.splits import Split
+from utils import list_input_files
 
 logger = logging.getLogger(__name__)
 disable_caching()
@@ -74,7 +74,7 @@ def main() -> None:
     random.shuffle(input_files)
 
     num_valid_examples_per_shard = int(
-        valid_token_size / len(input_files) / NUM_TOKENS_PER_EXAMPLE
+        valid_token_size / NUM_TOKENS_PER_EXAMPLE / len(input_files)
     )
 
     cur_train_token_size: int = 0
@@ -135,15 +135,6 @@ def canonicalize_number(number: str) -> int:
         return int(number[:-1]) * 1_000_000_000_000
     else:
         return int(number)
-
-
-def list_input_files(input_paths: list[str]) -> Iterator[pathlib.Path]:
-    for path_str in input_paths:
-        path = pathlib.Path(path_str)
-        if path.exists() is False:
-            logger.warning(f"{path} not found and skipped")
-            continue
-        yield from path.glob("*.parquet") if path.is_dir() else [path]
 
 
 def save_dataset(
