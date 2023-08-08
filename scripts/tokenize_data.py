@@ -8,6 +8,7 @@ from typing import Any
 import sentencepiece as spm
 from datasets import Dataset, disable_caching
 from tqdm import tqdm
+from utils import list_input_files
 
 logger = logging.getLogger(__name__)
 disable_caching()
@@ -86,24 +87,23 @@ def main() -> None:
     global sentence_piece_processor
     sentence_piece_processor = spm.SentencePieceProcessor(args.sentencepiece_model)
 
+    input_files: list[pathlib.Path] = sorted(list_input_files(args.input_path))
+    if not input_files:
+        return
+
     logger.info("Loading the dataset")
-    for path_str in tqdm(args.input_path):
-        path = pathlib.Path(path_str)
-        if path.exists() is False:
-            logger.warning(f"{path} not found and skipped")
-            continue
-        for input_file in tqdm(path.glob("*.parquet") if path.is_dir() else [path]):
-            output_file: pathlib.Path = output_dir.joinpath(input_file.name)
-            if output_file.exists() and not args.overwrite:
-                logger.error(
-                    f"{output_file} already exists. Specify --overwrite to overwrite."
-                )
-                continue
-            tokenize_file(
-                input_file,
-                output_file,
-                num_proc=os.cpu_count() if args.num_proc == -1 else args.num_proc,
+    for input_file in tqdm(input_files):
+        output_file: pathlib.Path = output_dir.joinpath(input_file.name)
+        if output_file.exists() and not args.overwrite:
+            logger.error(
+                f"{output_file} already exists. Specify --overwrite to overwrite."
             )
+            continue
+        tokenize_file(
+            input_file,
+            output_file,
+            num_proc=os.cpu_count() if args.num_proc == -1 else args.num_proc,
+        )
 
     end_time = time.time()
     logger.info(
