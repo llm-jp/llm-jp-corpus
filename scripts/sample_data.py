@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from collections.abc import Iterator
 from typing import Union
 
-from datasets import Dataset, DatasetDict, concatenate_datasets, disable_caching
+from datasets import Dataset, DatasetDict, disable_caching
 from datasets.splits import Split
 
 logger = logging.getLogger(__name__)
@@ -79,8 +79,6 @@ def main() -> None:
 
     cur_train_token_size: int = 0
     cur_valid_token_size: int = 0
-    buff_valid_dataset: Dataset = Dataset.from_dict({})
-    valid_chunk_index: int = 0
     output_file: pathlib.Path
     for input_file in input_files:
         dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
@@ -104,27 +102,17 @@ def main() -> None:
             )
             cur_train_token_size += sum(train_dataset["num_tokens"])
         if cur_valid_token_size < valid_token_size:
-            buff_valid_dataset = concatenate_datasets(
-                [buff_valid_dataset, valid_dataset]
-            )
-            cur_valid_token_size += sum(valid_dataset["num_tokens"])
-
-        # Save the data.
-        while len(buff_valid_dataset) >= CHUNK_SIZE:
             output_file = (
                 output_dir
-                / f"{Split.VALIDATION}_{valid_chunk_index}.{args.output_format}"
+                / f"{input_file.stem.replace(str(Split.TRAIN), str(Split.VALIDATION))}.{args.output_format}"
             )
             save_dataset(
-                buff_valid_dataset.select(range(0, CHUNK_SIZE), keep_in_memory=True),
+                valid_dataset,
                 output_file,
                 args.overwrite,
                 args.output_format,
             )
-            valid_chunk_index += 1
-            buff_valid_dataset = buff_valid_dataset.select(
-                range(CHUNK_SIZE, len(buff_valid_dataset)), keep_in_memory=True
-            )
+            cur_valid_token_size += sum(valid_dataset["num_tokens"])
 
         if (
             cur_train_token_size >= train_token_size
@@ -132,14 +120,6 @@ def main() -> None:
         ):
             break
 
-    if len(buff_valid_dataset):
-        assert len(buff_valid_dataset) < CHUNK_SIZE
-        output_file = (
-            output_dir / f"{Split.VALIDATION}_{valid_chunk_index}.{args.output_format}"
-        )
-        save_dataset(
-            buff_valid_dataset, output_file, args.overwrite, args.output_format
-        )
     logger.info(f"Finished extracting train data of {cur_train_token_size:,} tokens.")
     logger.info(f"Finished extracting valid data of {cur_valid_token_size:,} tokens.")
 
