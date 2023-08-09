@@ -50,6 +50,7 @@ def reformat_and_filter_dataset(dataset: Dataset, dataset_name: str) -> Dataset:
         reformat_fn = reformat_builder("text")
         map_fns.append(remove_wikipedia_footnote)
         map_fns.append(remove_empty_parenthesis)
+        filter_fns.append(is_ethical)
         filter_fns.append(is_not_empty)
     elif dataset_name == "en_wiki":
         reformat_fn = reformat_builder("text")
