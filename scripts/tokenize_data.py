@@ -28,10 +28,17 @@ def tokenize_examples(examples: dict[str, Any]) -> dict[str, Any]:
 
 
 def tokenize_file(
-    input_file: pathlib.Path, output_file: pathlib.Path, num_proc: int
+    input_file: pathlib.Path,
+    input_format: str,
+    output_file: pathlib.Path,
+    num_proc: int,
 ) -> None:
     logger.info(f"Loading {input_file}.")
-    dataset: Dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
+    if input_format == "jsonl":
+        dataset = Dataset.from_json(str(input_file), keep_in_memory=True)
+    else:
+        assert input_format == "parquet"
+        dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
     logger.info("Tokenizing the dataset.")
     dataset = dataset.map(
         tokenize_examples,
@@ -54,6 +61,13 @@ def main() -> None:
         type=str,
         nargs="+",
         help="Path(s) to the input data directory or file.",
+    )
+    parser.add_argument(
+        "--input_format",
+        type=str,
+        default="parquet",
+        choices=["jsonl", "parquet"],
+        help="Input format.",
     )
     parser.add_argument(
         "--output_dir",
@@ -87,13 +101,15 @@ def main() -> None:
     global sentence_piece_processor
     sentence_piece_processor = spm.SentencePieceProcessor(args.sentencepiece_model)
 
-    input_files: list[pathlib.Path] = sorted(list_input_files(args.input_path))
+    input_files: list[pathlib.Path] = sorted(
+        list_input_files(args.input_path, args.input_format)
+    )
     if not input_files:
         return
 
     logger.info("Loading the dataset")
     for input_file in tqdm(input_files):
-        output_file: pathlib.Path = output_dir.joinpath(input_file.name)
+        output_file: pathlib.Path = output_dir / f"{input_file.stem}.parquet"
         if output_file.exists() and not args.overwrite:
             logger.error(
                 f"{output_file} already exists. Specify --overwrite to overwrite."
@@ -101,6 +117,7 @@ def main() -> None:
             continue
         tokenize_file(
             input_file,
+            args.input_format,
             output_file,
             num_proc=os.cpu_count() if args.num_proc == -1 else args.num_proc,
         )
