@@ -42,7 +42,11 @@ def main() -> None:
     example_count: int = 0
     for input_file in tqdm(input_files):
         logger.info(f"Loading dataset from {input_file}.")
-        dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
+        if args.input_format == "jsonl":
+            dataset = Dataset.from_json(str(input_file), keep_in_memory=True)
+        else:
+            assert args.input_format == "parquet"
+            dataset = Dataset.from_parquet(str(input_file), keep_in_memory=True)
         logger.info(f"Counting tokens in {input_file.stem}.")
         if "num_tokens" not in dataset.column_names:
             dataset = dataset.map(
