@@ -5,6 +5,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 from datasets import Dataset, disable_caching
 from tqdm import tqdm
+from utils import list_input_files
 
 logger = logging.getLogger(__name__)
 disable_caching()
@@ -26,9 +27,10 @@ def process_file(
 def main() -> None:
     parser = ArgumentParser()
     parser.add_argument(
-        "--data_dir",
+        "--input_path",
         type=str,
-        help="Path to the wikipedia data directory.",
+        nargs="+",
+        help="Path(s) to the input data directory or file.",
     )
     parser.add_argument(
         "--output_dir",
@@ -48,12 +50,11 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    data_dir: pathlib.Path = pathlib.Path(args.data_dir)
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with ProcessPoolExecutor(max_workers=args.num_proc) as executor:
-        for input_file in tqdm(data_dir.glob("*.parquet")):
+        for input_file in tqdm(list_input_files(args.input_path)):
             executor.submit(process_file, input_file, output_dir, args.overwrite)
 
 

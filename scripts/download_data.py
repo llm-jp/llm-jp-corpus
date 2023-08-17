@@ -20,7 +20,7 @@ def main() -> None:
     parser.add_argument(
         "--output_dir",
         type=str,
-        help="Path to the wikipedia data directory.",
+        help="Path to the output data directory.",
     )
     parser.add_argument(
         "--overwrite",
@@ -40,14 +40,14 @@ def main() -> None:
         dataset = load_dataset(
             "wikipedia",
             language="ja",
-            date="20230320",
+            date="20230720",
             beam_runner="DirectRunner",
         )
     elif args.DATASET_NAME == "en_wiki":
         dataset = load_dataset(
             "wikipedia",
             language="en",
-            date="20230320",
+            date="20230720",
             beam_runner="DirectRunner",
         )
     elif args.DATASET_NAME == "ja_cc":

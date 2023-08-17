@@ -1,4 +1,3 @@
-import json
 import logging
 import pathlib
 import time
@@ -6,14 +5,21 @@ from argparse import ArgumentParser
 from typing import Any, Callable
 
 import tqdm
-from code_stack.filter_and_reformat import filter_and_reformat as filter_code_stack
 from datasets import Dataset, IterableDatasetDict, disable_caching, load_dataset
 from datasets.splits import Split
-from en_pile.filter_and_reformat import filter_and_reformat as filter_en_pile
-from en_wiki.filter_and_reformat import filter_and_reformat as filter_en_wiki
-from ja_cc.filter_and_reformat import filter_and_reformat as filter_ja_cc
-from ja_wiki.filter_and_reformat import filter_and_reformat as filter_ja_wiki
-from tqdm import tqdm
+from filters import (
+    extract_japanese_text,
+    has_valid_alphanum_fraction,
+    has_valid_avg_line_length,
+    has_valid_domain,
+    has_valid_extension,
+    has_valid_max_line_length,
+    is_ethical,
+    is_not_empty,
+    reformat_builder,
+    remove_empty_parenthesis,
+    remove_wikipedia_footnote,
+)
 
 logger = logging.getLogger(__name__)
 disable_caching()
@@ -36,6 +42,50 @@ def get_data_files(search_dir: pathlib.Path, ext: str) -> dict[Split, pathlib.Pa
     return data_files
 
 
+def reformat_and_filter_dataset(dataset: Dataset, dataset_name: str) -> Dataset:
+    reformat_fn: Callable[..., dict[str, Any]]
+    map_fns: list[Callable[..., dict[str, Any]]] = []
+    filter_fns: list[Callable[..., bool]] = []
+    if dataset_name == "ja_wiki":
+        reformat_fn = reformat_builder("text")
+        map_fns.append(remove_wikipedia_footnote)
+        map_fns.append(remove_empty_parenthesis)
+        filter_fns.append(is_ethical)
+        filter_fns.append(is_not_empty)
+    elif dataset_name == "en_wiki":
+        reformat_fn = reformat_builder("text")
+        map_fns.append(remove_wikipedia_footnote)
+        map_fns.append(remove_empty_parenthesis)
+        filter_fns.append(is_not_empty)
+    elif dataset_name == "ja_cc":
+        reformat_fn = reformat_builder("text")
+        map_fns.append(extract_japanese_text)
+        filter_fns.append(has_valid_domain)
+        filter_fns.append(is_not_empty)
+        filter_fns.append(is_ethical)
+    elif dataset_name == "en_pile":
+        reformat_fn = reformat_builder("text")
+        filter_fns.append(is_not_empty)
+    elif dataset_name == "code_stack":
+        reformat_fn = reformat_builder("content")
+        filter_fns.append(has_valid_extension)
+        filter_fns.append(has_valid_max_line_length)
+        filter_fns.append(has_valid_avg_line_length)
+        filter_fns.append(has_valid_alphanum_fraction)
+        filter_fns.append(is_not_empty)
+    else:
+        raise ValueError(f"Unknown dataset name: {dataset_name}.")
+
+    dataset = dataset.map(reformat_fn, batched=False)
+    columns = list(dataset["train"].take(1))[0].keys()
+    dataset = dataset.map(remove_columns=list(set(columns) - {"text", "meta"}))
+    for filter_fn in filter_fns:
+        dataset = dataset.filter(filter_fn)
+    for map_fn in map_fns:
+        dataset = dataset.map(map_fn, batched=False)
+    return dataset.filter(is_not_empty)
+
+
 def main() -> None:
     parser = ArgumentParser()
     parser.add_argument(
@@ -45,9 +95,9 @@ def main() -> None:
         help="Dataset name",
     )
     parser.add_argument(
-        "--data_dir",
+        "--input_dir",
         type=str,
-        help="Path to the wikipedia data directory.",
+        help="Path to the data directory.",
     )
     parser.add_argument(
         "--output_dir",
@@ -61,7 +111,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    data_dir: pathlib.Path = pathlib.Path(args.data_dir)
+    input_dir: pathlib.Path = pathlib.Path(args.input_dir)
     output_dir: pathlib.Path = pathlib.Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -70,38 +120,16 @@ def main() -> None:
     logger.info("Loading the dataset")
     dataset: IterableDatasetDict = load_dataset(
         "json",
-        data_files={k: str(v) for k, v in get_data_files(data_dir, "jsonl").items()},
+        data_files={k: str(v) for k, v in get_data_files(input_dir, "jsonl").items()},
         streaming=True,
     )
 
-    filter_fn: Callable[..., dict[str, Any]]
-    if args.DATASET_NAME == "ja_wiki":
-        filter_fn = filter_ja_wiki
-    elif args.DATASET_NAME == "en_wiki":
-        filter_fn = filter_en_wiki
-    elif args.DATASET_NAME == "ja_cc":
-        filter_fn = filter_ja_cc
-    elif args.DATASET_NAME == "en_pile":
-        filter_fn = filter_en_pile
-    elif args.DATASET_NAME == "code_stack":
-        filter_fn = filter_code_stack
-    else:
-        raise ValueError(f"Unknown dataset name: {args.DATASET_NAME}.")
-
-    dataset = dataset.map(
-        filter_fn,
-        remove_columns=list(
-            set(list(dataset["train"].take(1))[0].keys()) - {"text", "meta"}
-        ),
-        batched=False,
-    ).filter(
-        lambda example: example["text"] != "",
-    )
+    dataset = reformat_and_filter_dataset(dataset, args.DATASET_NAME)
 
     logger.info(f"Writing the reformatted data to {output_dir}.")
     for split, ds in dataset.items():
         chunk_index = 0
-        for batch in tqdm(ds.iter(batch_size=CHUNK_SIZE)):
+        for batch in tqdm.tqdm(ds.iter(batch_size=CHUNK_SIZE)):
             output_file: pathlib.Path = output_dir.joinpath(
                 f"{split}_{chunk_index}.parquet"
             )
@@ -113,14 +141,11 @@ def main() -> None:
                 continue
 
             Dataset.from_dict(batch).to_parquet(output_file)
-            logger.info(
-                f"Finished writing the reformatted {split} split to {output_file}."
-            )
             chunk_index += 1
 
     end_time = time.time()
     logger.info(
-        f"Finished tokenizing the dataset. Elapsed time: {end_time - start_time} [sec]"
+        f"Finished processing the dataset. Elapsed time: {end_time - start_time} [sec]"
     )
 
 
