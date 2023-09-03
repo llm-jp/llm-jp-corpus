@@ -3,7 +3,9 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlparse
 
+import math
 import regex
+import zlib
 
 
 def reformat_builder(text_field: str) -> Callable[..., dict[str, Any]]:
@@ -128,6 +130,52 @@ def has_valid_avg_line_length(example: dict[str, Any]) -> bool:
 def has_valid_alphanum_fraction(example: dict[str, Any]) -> bool:
     # https://github.com/togethercomputer/RedPajama-Data/blob/main/data_prep/github/github_run_filter.py
     return example["meta"]["alphanum_fraction"] >= 0.25
+
+
+def has_good_compression_ratio(min_score: float, max_score: float, length_norm: float):
+    """Checks if data compression (deflate) yields a desired size of data stream.
+
+    NOTE(odashi, 2023-09-03):
+    Ths judgment is based on an assumption that a "natual" sentence has an entropy
+    within a certain range, and both "too simple" (low entropy) and "too complex" (high
+    entropy) sentences do't reflect human's usual writing.
+    This function calculates the data compression ratio (calculated by the Deflate
+    algorithm) of the original stream, and compares if the resulting ratio is in-between
+    the specified range.
+    This criterion is somewhat sensitive against the length of the original stream (e.g.
+    if the input is long, the resulting compression ratio tends to be small).
+    This function also has a mechanism to consider the original length (adjusted by the
+    `length_norm` parameter).
+
+    Args:
+        min_score: The lower bound of the compression ratio.
+        max_score: The upper bound of the compression ratio.
+        length_norm: Penalty factor of log(original_byte_length), usually set to
+            something larger than 0. Using 0 falls back to a simple compression ratio.
+
+    Returns:
+        Judgment function, bound with `min` and `max`.
+
+    Example:
+        >>> judge = has_good_compression_ratio(0.1, 1.0, 0.0)
+        >>> judge({"text": "LbdJA66Ufy4Pr6ffQEIo0DL60OL7kQl6y6ohAhqYKf3laCruuR"})
+        False  # 1.16
+        >>> judge({"text": "a"*200})
+        False  # 0.06
+        >>> judge({"text": "This is a usual sentence. This sentence should pass this judgment."})
+        True  # 0.92
+    """
+    def judge(example):
+        encoded = example["text"].encode("utf-8")
+        compressed = zlib.compress(encoded, level=9, wbits=15)
+        encoded_length = len(encoded)
+        compressed_length = len(compressed)
+        ratio = compressed_length / encoded_length
+        length_penalty = length_norm * math.log(encoded_length) if length_norm else 0.0
+        score = ratio + length_penalty
+        return min_score <= score <= max_score
+
+    return judge
 
 
 def is_not_empty(example: dict[str, Any]) -> bool:
