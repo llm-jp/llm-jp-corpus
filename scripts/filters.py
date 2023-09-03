@@ -132,7 +132,7 @@ def has_valid_alphanum_fraction(example: dict[str, Any]) -> bool:
     return example["meta"]["alphanum_fraction"] >= 0.25
 
 
-def has_good_compression_ratio(min_score: float, max_score: float, length_norm: float):
+def has_good_compression_ratio(min_score: float, max_score: float, length_factor: float):
     """Checks if data compression (deflate) yields a desired size of data stream.
 
     NOTE(odashi, 2023-09-03):
@@ -150,7 +150,7 @@ def has_good_compression_ratio(min_score: float, max_score: float, length_norm: 
     Args:
         min_score: The lower bound of the compression ratio.
         max_score: The upper bound of the compression ratio.
-        length_norm: Penalty factor of log(original_byte_length), usually set to
+        length_factor: Penalty factor of log(original_byte_length), usually set to
             something larger than 0. Using 0 falls back to a simple compression ratio.
 
     Returns:
@@ -171,7 +171,7 @@ def has_good_compression_ratio(min_score: float, max_score: float, length_norm: 
         encoded_length = len(encoded)
         compressed_length = len(compressed)
         ratio = compressed_length / encoded_length
-        length_penalty = length_norm * math.log(encoded_length) if length_norm else 0.0
+        length_penalty = length_factor * math.log(encoded_length) if length_factor else 0.0
         score = ratio + length_penalty
         return min_score <= score <= max_score
 
