@@ -1,11 +1,18 @@
 import logging
 import pathlib
 import time
+import typing
 from argparse import ArgumentParser
 from typing import Any, Callable
 
 import tqdm
-from datasets import Dataset, IterableDatasetDict, disable_caching, load_dataset
+from datasets import (
+    Dataset,
+    DatasetDict,
+    IterableDataset,
+    disable_caching,
+    load_dataset,
+)
 from datasets.splits import Split
 from filters import (
     extract_japanese_text,
@@ -42,7 +49,7 @@ def get_data_files(search_dir: pathlib.Path, ext: str) -> dict[Split, pathlib.Pa
     return data_files
 
 
-def reformat_and_filter_dataset(dataset: Dataset, dataset_name: str) -> Dataset:
+def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> DatasetDict:
     reformat_fn: Callable[..., dict[str, Any]]
     map_fns: list[Callable[..., dict[str, Any]]] = []
     filter_fns: list[Callable[..., bool]] = []
@@ -77,7 +84,13 @@ def reformat_and_filter_dataset(dataset: Dataset, dataset_name: str) -> Dataset:
         raise ValueError(f"Unknown dataset name: {dataset_name}.")
 
     dataset = dataset.map(reformat_fn, batched=False)
-    columns = list(dataset["train"].take(1))[0].keys()
+    train_dataset: typing.Union[Dataset, IterableDataset] = dataset["train"]
+    if isinstance(train_dataset, Dataset):
+        columns = list(train_dataset[0].keys())
+    elif isinstance(train_dataset, IterableDataset):
+        columns = list(train_dataset.take(1))[0].keys()
+    else:
+        raise ValueError
     dataset = dataset.map(remove_columns=list(set(columns) - {"text", "meta"}))
     for filter_fn in filter_fns:
         dataset = dataset.filter(filter_fn)
@@ -118,7 +131,7 @@ def main() -> None:
     start_time = time.time()
 
     logger.info("Loading the dataset")
-    dataset: IterableDatasetDict = load_dataset(
+    dataset: DatasetDict = load_dataset(
         "json",
         data_files={k: str(v) for k, v in get_data_files(input_dir, "jsonl").items()},
         streaming=True,

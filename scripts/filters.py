@@ -1,21 +1,19 @@
+import math
 import typing
+import zlib
 from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlparse
 
-import math
 import regex
-import zlib
 
 
 def reformat_builder(text_field: str) -> Callable[..., dict[str, Any]]:
     def reformat(example: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "text": example[text_field],
-            "meta": {
-                **{k: v for k, v in example.items() if k != text_field},
-            },
-        }
+        text = example[text_field]
+        meta = example.get("meta", {})
+        meta.update({k: v for k, v in example.items() if k not in {text_field, "meta"}})
+        return {"text": text, "meta": meta}
 
     return reformat
 
@@ -132,7 +130,9 @@ def has_valid_alphanum_fraction(example: dict[str, Any]) -> bool:
     return example["meta"]["alphanum_fraction"] >= 0.25
 
 
-def has_good_compression_ratio(min_score: float, max_score: float, length_factor: float):
+def has_good_compression_ratio(
+    min_score: float, max_score: float, length_factor: float
+):
     """Checks if data compression (deflate) yields a desired size of data stream.
 
     NOTE(odashi, 2023-09-03):
@@ -165,13 +165,16 @@ def has_good_compression_ratio(min_score: float, max_score: float, length_factor
         >>> judge({"text": "This is a usual sentence. This sentence should pass this judgment."})
         True  # 0.92
     """
+
     def judge(example):
         encoded = example["text"].encode("utf-8")
         compressed = zlib.compress(encoded, level=9, wbits=15)
         encoded_length = len(encoded)
         compressed_length = len(compressed)
         ratio = compressed_length / encoded_length
-        length_penalty = length_factor * math.log(encoded_length) if length_factor else 0.0
+        length_penalty = (
+            length_factor * math.log(encoded_length) if length_factor else 0.0
+        )
         score = ratio + length_penalty
         return min_score <= score <= max_score
 
