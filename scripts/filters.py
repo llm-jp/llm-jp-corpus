@@ -131,21 +131,21 @@ def has_valid_alphanum_fraction(example: dict[str, Any]) -> bool:
 
 
 def has_good_compression_ratio(
-    min_score: float, max_score: float, length_factor: float
+    min_score: float = 0.3, max_score: float = 0.7, length_factor: float = 0.0
 ):
     """Checks if data compression (deflate) yields a desired size of data stream.
 
     NOTE(odashi, 2023-09-03):
     Ths judgment is based on an assumption that a "natual" sentence has an entropy
     within a certain range, and both "too simple" (low entropy) and "too complex" (high
-    entropy) sentences do't reflect human's usual writing.
+    entropy) sentences don't reflect human's usual writing.
     This function calculates the data compression ratio (calculated by the Deflate
     algorithm) of the original stream, and compares if the resulting ratio is in-between
     the specified range.
     This criterion is somewhat sensitive against the length of the original stream (e.g.
     if the input is long, the resulting compression ratio tends to be small).
     This function also has a mechanism to consider the original length (adjusted by the
-    `length_norm` parameter).
+    `length_factor` parameter).
 
     Args:
         min_score: The lower bound of the compression ratio.
@@ -168,7 +168,7 @@ def has_good_compression_ratio(
 
     def judge(example):
         encoded = example["text"].encode("utf-8")
-        compressed = zlib.compress(encoded, level=9, wbits=15)
+        compressed = zlib.compress(encoded, level=9)
         encoded_length = len(encoded)
         compressed_length = len(compressed)
         ratio = compressed_length / encoded_length
