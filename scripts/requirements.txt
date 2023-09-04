@@ -57,6 +57,8 @@ grpcio==1.56.0
     # via apache-beam
 hdfs==2.7.0
     # via apache-beam
+hojichar==0.9.0
+    # via -r requirements.in
 httplib2==0.22.0
     # via apache-beam
 huggingface-hub==0.15.1
@@ -67,6 +69,8 @@ idna==3.4
     # via
     #   requests
     #   yarl
+mmh3==4.0.1
+    # via hojichar
 multidict==6.0.4
     # via
     #   aiohttp
@@ -79,6 +83,7 @@ numpy==1.24.4
     # via
     #   apache-beam
     #   datasets
+    #   hojichar
     #   pandas
     #   pyarrow
     #   transformers
@@ -150,6 +155,7 @@ tokenizers==0.13.3
 tqdm==4.65.0
     # via
     #   datasets
+    #   hojichar
     #   huggingface-hub
     #   transformers
 transformers==4.30.2
