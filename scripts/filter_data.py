@@ -23,6 +23,7 @@ from filters import (
     has_valid_extension,
     has_valid_max_line_length,
     is_ethical,
+    is_japanese,
     is_not_empty,
     reformat_builder,
     remove_empty_parenthesis,
@@ -71,6 +72,7 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
         filter_fns.append(has_valid_domain)
         filter_fns.append(is_not_empty)
         filter_fns.append(is_ethical)
+        filter_fns.append(is_japanese)
         filter_fns.append(has_good_compression_ratio())
     elif dataset_name == "en_pile":
         reformat_fn = reformat_builder("text")

@@ -6,6 +6,8 @@ from typing import Any, Callable
 from urllib.parse import urlparse
 
 import regex
+from hojichar import Document
+from hojichar.filters.document_filters import AcceptJapanese
 
 
 def reformat_builder(text_field: str) -> Callable[..., dict[str, Any]]:
@@ -179,6 +181,14 @@ def has_good_compression_ratio(
         return min_score <= score <= max_score
 
     return judge
+
+
+accept_japanese_filter = AcceptJapanese()
+
+
+def is_japanese(example: dict[str, Any]) -> bool:
+    doc = accept_japanese_filter.apply(Document(example["text"]))
+    return not doc.is_rejected
 
 
 def is_not_empty(example: dict[str, Any]) -> bool:
