@@ -53,3 +53,11 @@ python sample_data.py --input_path data/tokenize/ja_cc --output_dir data/sample 
 python sample_data.py --input_path data/tokenize/en_pile --output_dir data/sample --train_token_size -1 --valid_token_size 10M
 python sample_data.py --input_path data/tokenize/code_stack --output_dir data/sample --train_token_size -1 --valid_token_size 10M
 ```
+
+---
+
+## Evaluating the filtering quality
+
+```bash
+python evaluate_filtering.py ja_cc --input_path benchmark/ja-mc4.valid.labeled.jsonl
+```
