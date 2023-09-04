@@ -37,7 +37,7 @@ def get_scores(dataset: Dataset, filtered_dataset: Dataset) -> dict[str, float]:
     pre = tp / (tp + fp) if tp + fp > 0 else 0.0
     rec = tp / (tp + fn) if tp + fn > 0 else 0.0
     f1 = 2 * pre * rec / (pre + rec) if pre + rec > 0 else 0.0
-    return {"precision": pre, "rec": rec, "f1": f1}
+    return {"precision": pre, "recall": rec, "f1": f1}
 
 
 def main() -> None:
