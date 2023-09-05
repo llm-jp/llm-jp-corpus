@@ -210,15 +210,34 @@ def is_adult_content(threshold: int = 3):
                 break
         return doc
 
-    ng_words_content_filter = NgWordsFilterJa(dict_path, ignore_confused=True)
-    ng_words_content_filter.apply = apply.__get__(
-        ng_words_content_filter, NgWordsFilterJa
-    )
+    content_filter = NgWordsFilterJa(dict_path, ignore_confused=True)
+    content_filter.apply = apply.__get__(content_filter, NgWordsFilterJa)
 
     def judge(example: dict[str, Any]) -> bool:
-        doc = ng_words_content_filter.apply(Document(example["text"]))
-        if doc.is_rejected and example["meta"]["label"] == "0":
-            return False
+        doc = content_filter.apply(Document(example["text"]))
+        return not doc.is_rejected
+
+    return judge
+
+
+def is_discrimination_content(threshold: int = 3):
+    dict_path = BASE_PATH.joinpath("nsfw_words/discrimination_keywords_ja.txt")
+
+    # Monkey patch for hojichar
+    def apply(self, doc):
+        seen_words = set()
+        for match in self.keyword_pat.finditer(doc.text):
+            seen_words.add(match.group(0))
+            if len(seen_words) == threshold:
+                doc.is_rejected = True
+                break
+        return doc
+
+    content_filter = NgWordsFilterJa(dict_path, ignore_confused=True)
+    content_filter.apply = apply.__get__(content_filter, NgWordsFilterJa)
+
+    def judge(example: dict[str, Any]) -> bool:
+        doc = content_filter.apply(Document(example["text"]))
         return not doc.is_rejected
 
     return judge

@@ -23,6 +23,7 @@ from filters import (
     has_valid_extension,
     has_valid_max_line_length,
     is_adult_content,
+    is_discrimination_content,
     is_japanese,
     is_not_empty,
     reformat_builder,
@@ -72,6 +73,7 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
         filter_fns.append(is_not_empty)
         filter_fns.append(is_adult_content())
         filter_fns.append(is_japanese)
+        filter_fns.append(is_discrimination_content())
         filter_fns.append(has_good_compression_ratio())
     elif dataset_name == "en_pile":
         reformat_fn = reformat_builder("text")
