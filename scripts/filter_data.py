@@ -26,6 +26,7 @@ from filters import (
     is_discrimination_content,
     is_japanese,
     is_not_empty,
+    is_violence_content,
     reformat_builder,
     remove_empty_parenthesis,
     remove_wikipedia_footnote,
@@ -74,6 +75,7 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
         filter_fns.append(is_adult_content())
         filter_fns.append(is_japanese)
         filter_fns.append(is_discrimination_content())
+        filter_fns.append(is_violence_content())
         filter_fns.append(has_good_compression_ratio())
     elif dataset_name == "en_pile":
         reformat_fn = reformat_builder("text")
