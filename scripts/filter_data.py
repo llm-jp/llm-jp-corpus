@@ -22,7 +22,7 @@ from filters import (
     has_valid_domain,
     has_valid_extension,
     has_valid_max_line_length,
-    is_ethical,
+    is_adult_content,
     is_japanese,
     is_not_empty,
     reformat_builder,
@@ -59,7 +59,6 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
         reformat_fn = reformat_builder("text")
         map_fns.append(remove_wikipedia_footnote)
         map_fns.append(remove_empty_parenthesis)
-        filter_fns.append(is_ethical)
         filter_fns.append(is_not_empty)
     elif dataset_name == "en_wiki":
         reformat_fn = reformat_builder("text")
@@ -71,7 +70,7 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
         map_fns.append(extract_japanese_text)
         filter_fns.append(has_valid_domain)
         filter_fns.append(is_not_empty)
-        filter_fns.append(is_ethical)
+        filter_fns.append(is_adult_content())
         filter_fns.append(is_japanese)
         filter_fns.append(has_good_compression_ratio())
     elif dataset_name == "en_pile":

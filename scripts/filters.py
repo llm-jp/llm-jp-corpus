@@ -7,7 +7,9 @@ from urllib.parse import urlparse
 
 import regex
 from hojichar import Document
-from hojichar.filters.document_filters import AcceptJapanese
+from hojichar.filters.document_filters import AcceptJapanese, NgWordsFilterJa
+
+BASE_PATH = Path(__file__).parent
 
 
 def reformat_builder(text_field: str) -> Callable[..., dict[str, Any]]:
@@ -195,20 +197,31 @@ def is_not_empty(example: dict[str, Any]) -> bool:
     return example["text"].strip() != ""
 
 
-nsfw_words: list[str] = []
-with Path(__file__).parent.joinpath("nsfw_words/ja.txt").open() as f:
-    for line in f:
-        if not line.startswith("#"):
-            nsfw_words.append(line.strip())
+def is_adult_content(threshold: int = 3):
+    dict_path = BASE_PATH.joinpath("nsfw_words/adult_keywords_ja.txt")
 
+    # Monkey patch for hojichar
+    def apply(self, doc):
+        seen_words = set()
+        for match in self.keyword_pat.finditer(doc.text):
+            seen_words.add(match.group(0))
+            if len(seen_words) == threshold:
+                doc.is_rejected = True
+                break
+        return doc
 
-def is_ethical(example: dict[str, Any]) -> bool:
-    nsfw_word_count: int = 0
-    for word in nsfw_words:
-        nsfw_word_count += example["text"].count(word)
-        if nsfw_word_count >= 3:
+    ng_words_content_filter = NgWordsFilterJa(dict_path, ignore_confused=True)
+    ng_words_content_filter.apply = apply.__get__(
+        ng_words_content_filter, NgWordsFilterJa
+    )
+
+    def judge(example: dict[str, Any]) -> bool:
+        doc = ng_words_content_filter.apply(Document(example["text"]))
+        if doc.is_rejected and example["meta"]["label"] == "0":
             return False
-    return True
+        return not doc.is_rejected
+
+    return judge
 
 
 def extract_japanese_text(example: dict[str, Any]) -> dict[str, Any]:
