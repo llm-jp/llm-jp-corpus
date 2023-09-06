@@ -155,12 +155,8 @@ def is_not_adult_content(max_allowed_num: int = 3) -> Callable[..., bool]:
 
     # Monkey patch for hojichar
     def apply(self, doc):
-        seen_words = set()
-        for match in self.keyword_pat.finditer(doc.text):
-            seen_words.add(match.group(0))
-            if len(seen_words) == max_allowed_num:
-                doc.is_rejected = True
-                break
+        if len(self.keyword_pat.findall(doc.text)) > max_allowed_num:
+            doc.is_rejected = True
         return doc
 
     content_filter = NgWordsFilterJa(dict_path, ignore_confused=True)
@@ -178,12 +174,8 @@ def is_not_discrimination_content(max_allowed_num: int = 3) -> Callable[..., boo
 
     # Monkey patch for hojichar
     def apply(self, doc):
-        seen_words = set()
-        for match in self.keyword_pat.finditer(doc.text):
-            seen_words.add(match.group(0))
-            if len(seen_words) == max_allowed_num:
-                doc.is_rejected = True
-                break
+        if len(self.keyword_pat.findall(doc.text)) > max_allowed_num:
+            doc.is_rejected = True
         return doc
 
     content_filter = NgWordsFilterJa(dict_path, ignore_confused=True)
@@ -201,12 +193,8 @@ def is_not_violence_content(max_allowed_num: int = 3) -> Callable[..., bool]:
 
     # Monkey patch for hojichar
     def apply(self, doc):
-        seen_words = set()
-        for match in self.keyword_pat.finditer(doc.text):
-            seen_words.add(match.group(0))
-            if len(seen_words) == max_allowed_num:
-                doc.is_rejected = True
-                break
+        if len(self.keyword_pat.findall(doc.text)) > max_allowed_num:
+            doc.is_rejected = True
         return doc
 
     content_filter = NgWordsFilterJa(dict_path, ignore_confused=True)
