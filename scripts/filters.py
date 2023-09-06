@@ -27,28 +27,16 @@ def reformat_data(text_field: str) -> Callable[..., dict[str, Any]]:
 
 
 def has_valid_domain() -> Callable[..., bool]:
+    dict_path = BASE_PATH.joinpath("dict/ja_valid_domains.txt")
+    valid_domains = set(dict_path.read_text().splitlines())
+
     def judge(example: dict[str, Any]) -> bool:
         if example["meta"]["url"].startswith("https://ja.wikipedia.org/"):
             return False
         domain: typing.Optional[str] = urlparse(example["meta"]["url"]).hostname
         assert domain is not None
-        tld: str = domain.split(".")[-1]
-        return tld in {
-            "jp",
-            "com",
-            "net",
-            "org",
-            "work",
-            "info",
-            "xyz",
-            "biz",
-            "work",
-            "me",
-            "tv",
-            "site",
-            "tokyo",
-            "cc",
-        }
+        tld = domain.split(".")[-1]
+        return tld in valid_domains
 
     return judge
 

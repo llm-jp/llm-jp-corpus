@@ -1,5 +1,5 @@
-# NSFW Words
+*Warning: The following files include offensive content.*
 
-*Warning: The word lists contain offensive content.*
-
-The word lists are derived from [Hojichar](https://github.com/HojiChar/HojiChar).
+- ja_adult_keywords.txt (derived from [Hojichar](https://github.com/HojiChar/HojiChar))
+- ja_discrimination_keywords.txt (derived from [Hojichar](https://github.com/HojiChar/HojiChar))
+- ja_violence_keywords.txt (derived from [Hojichar](https://github.com/HojiChar/HojiChar))
