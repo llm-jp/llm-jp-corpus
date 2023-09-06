@@ -22,6 +22,7 @@ from filters import (
     has_valid_domain,
     has_valid_extension,
     has_valid_max_line_length,
+    is_ad_content,
     is_adult_content,
     is_discrimination_content,
     is_japanese,
@@ -73,6 +74,7 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
         filter_fns.append(has_valid_domain)
         filter_fns.append(is_not_empty)
         filter_fns.append(is_japanese)
+        filter_fns.append(is_ad_content())
         filter_fns.append(is_adult_content())
         filter_fns.append(is_discrimination_content())
         filter_fns.append(is_violence_content())

@@ -7,7 +7,11 @@ from urllib.parse import urlparse
 
 import regex
 from hojichar import Document
-from hojichar.filters.document_filters import AcceptJapanese, NgWordsFilterJa
+from hojichar.filters.document_filters import (
+    AcceptJapanese,
+    DiscardAds,
+    NgWordsFilterJa,
+)
 
 BASE_PATH = Path(__file__).parent
 
@@ -258,6 +262,16 @@ def is_violence_content(threshold: int = 3):
 
     content_filter = NgWordsFilterJa(dict_path, ignore_confused=True)
     content_filter.apply = apply.__get__(content_filter, NgWordsFilterJa)
+
+    def judge(example: dict[str, Any]) -> bool:
+        doc = content_filter.apply(Document(example["text"]))
+        return not doc.is_rejected
+
+    return judge
+
+
+def is_ad_content(threshold: int = 10):
+    content_filter = DiscardAds(max_allowed_num=threshold)
 
     def judge(example: dict[str, Any]) -> bool:
         doc = content_filter.apply(Document(example["text"]))
