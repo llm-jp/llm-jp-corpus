@@ -52,26 +52,32 @@ def has_valid_extension() -> Callable[..., bool]:
     return judge
 
 
-def has_valid_max_line_length() -> Callable[..., bool]:
+def has_valid_max_line_length(
+    allowed_max_line_length: int = 1_000,
+) -> Callable[..., bool]:
     def judge(example: dict[str, Any]) -> bool:
         # https://github.com/togethercomputer/RedPajama-Data/blob/main/data_prep/github/github_run_filter.py
-        return example["meta"]["max_line_length"] <= 1000
+        return example["meta"]["max_line_length"] <= allowed_max_line_length
 
     return judge
 
 
-def has_valid_avg_line_length() -> Callable[..., bool]:
+def has_valid_avg_line_length(
+    allowed_avg_line_length: int = 100,
+) -> Callable[..., bool]:
     def judge(example: dict[str, Any]) -> bool:
         # https://github.com/togethercomputer/RedPajama-Data/blob/main/data_prep/github/github_run_filter.py
-        return example["meta"]["avg_line_length"] <= 100
+        return example["meta"]["avg_line_length"] <= allowed_avg_line_length
 
     return judge
 
 
-def has_valid_alphanum_fraction() -> Callable[..., bool]:
+def has_valid_alphanum_fraction(
+    allowed_alphanum_fraction: float = 0.25,
+) -> Callable[..., bool]:
     def judge(example: dict[str, Any]) -> bool:
         # https://github.com/togethercomputer/RedPajama-Data/blob/main/data_prep/github/github_run_filter.py
-        return example["meta"]["alphanum_fraction"] >= 0.25
+        return example["meta"]["alphanum_fraction"] >= allowed_alphanum_fraction
 
     return judge
 
@@ -106,7 +112,7 @@ def has_good_compression_ratio(
         >>> judge = has_good_compression_ratio(0.1, 1.0, 0.0)
         >>> judge({"text": "LbdJA66Ufy4Pr6ffQEIo0DL60OL7kQl6y6ohAhqYKf3laCruuR"})
         False  # 1.16
-        >>> judge({"text": "a"*200})
+        >>> judge({"text": "a" * 200})
         False  # 0.06
         >>> judge({"text": "This is a usual sentence. This sentence should pass this judgment."})
         True  # 0.92
