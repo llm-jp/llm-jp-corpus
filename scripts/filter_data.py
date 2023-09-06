@@ -22,13 +22,13 @@ from filters import (
     has_valid_domain,
     has_valid_extension,
     has_valid_max_line_length,
-    is_ad_content,
-    is_adult_content,
-    is_discrimination_content,
     is_japanese,
+    is_not_ad_content,
+    is_not_adult_content,
+    is_not_discrimination_content,
     is_not_empty,
-    is_violence_content,
-    reformat_builder,
+    is_not_violence_content,
+    reformat_data,
     remove_empty_parenthesis,
     remove_wikipedia_footnote,
 )
@@ -59,36 +59,36 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
     map_fns: list[Callable[..., dict[str, Any]]] = []
     filter_fns: list[Callable[..., bool]] = []
     if dataset_name == "ja_wiki":
-        reformat_fn = reformat_builder("text")
-        map_fns.append(remove_wikipedia_footnote)
-        map_fns.append(remove_empty_parenthesis)
-        filter_fns.append(is_not_empty)
+        reformat_fn = reformat_data("text")
+        map_fns.append(remove_wikipedia_footnote())
+        map_fns.append(remove_empty_parenthesis())
+        filter_fns.append(is_not_empty())
     elif dataset_name == "en_wiki":
-        reformat_fn = reformat_builder("text")
-        map_fns.append(remove_wikipedia_footnote)
-        map_fns.append(remove_empty_parenthesis)
-        filter_fns.append(is_not_empty)
+        reformat_fn = reformat_data("text")
+        map_fns.append(remove_wikipedia_footnote())
+        map_fns.append(remove_empty_parenthesis())
+        filter_fns.append(is_not_empty())
     elif dataset_name == "ja_cc":
-        reformat_fn = reformat_builder("text")
-        map_fns.append(extract_japanese_text)
-        filter_fns.append(has_valid_domain)
-        filter_fns.append(is_not_empty)
-        filter_fns.append(is_japanese)
-        filter_fns.append(is_ad_content())
-        filter_fns.append(is_adult_content())
-        filter_fns.append(is_discrimination_content())
-        filter_fns.append(is_violence_content())
+        reformat_fn = reformat_data("text")
+        map_fns.append(extract_japanese_text())
+        filter_fns.append(has_valid_domain())
+        filter_fns.append(is_not_empty())
+        filter_fns.append(is_japanese())
+        filter_fns.append(is_not_ad_content())
+        filter_fns.append(is_not_adult_content())
+        filter_fns.append(is_not_discrimination_content())
+        filter_fns.append(is_not_violence_content())
         filter_fns.append(has_good_compression_ratio())
     elif dataset_name == "en_pile":
-        reformat_fn = reformat_builder("text")
-        filter_fns.append(is_not_empty)
+        reformat_fn = reformat_data("text")
+        filter_fns.append(is_not_empty())
     elif dataset_name == "code_stack":
-        reformat_fn = reformat_builder("content")
-        filter_fns.append(has_valid_extension)
-        filter_fns.append(has_valid_max_line_length)
-        filter_fns.append(has_valid_avg_line_length)
-        filter_fns.append(has_valid_alphanum_fraction)
-        filter_fns.append(is_not_empty)
+        reformat_fn = reformat_data("content")
+        filter_fns.append(has_valid_extension())
+        filter_fns.append(has_valid_max_line_length())
+        filter_fns.append(has_valid_avg_line_length())
+        filter_fns.append(has_valid_alphanum_fraction())
+        filter_fns.append(is_not_empty())
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}.")
 
@@ -105,7 +105,7 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
         dataset = dataset.filter(filter_fn)
     for map_fn in map_fns:
         dataset = dataset.map(map_fn, batched=False)
-    return dataset.filter(is_not_empty)
+    return dataset.filter(is_not_empty())
 
 
 def main() -> None:
