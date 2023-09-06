@@ -16,6 +16,7 @@ from datasets import (
 from datasets.splits import Split
 from filters import (
     extract_japanese_text,
+    has_good_average_sentence_length,
     has_good_compression_ratio,
     has_valid_alphanum_fraction,
     has_valid_avg_line_length,
@@ -78,6 +79,7 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
         filter_fns.append(is_not_adult_content())
         filter_fns.append(is_not_discrimination_content())
         filter_fns.append(is_not_violence_content())
+        filter_fns.append(has_good_average_sentence_length())
         filter_fns.append(has_good_compression_ratio())
     elif dataset_name == "en_pile":
         reformat_fn = reformat_data("text")

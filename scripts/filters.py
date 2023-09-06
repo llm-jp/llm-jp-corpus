@@ -10,6 +10,7 @@ from hojichar import Document
 from hojichar.filters.document_filters import (
     AcceptJapanese,
     DiscardAds,
+    DiscardRareKuten,
     NgWordsFilterJa,
 )
 
@@ -146,6 +147,20 @@ def is_japanese() -> Callable[..., bool]:
 def is_not_empty() -> Callable[..., bool]:
     def judge(example: dict[str, Any]) -> bool:
         return example["text"].strip() != ""
+
+    return judge
+
+
+def has_good_average_sentence_length(
+    max_average_sentence_length: int = 250,
+) -> Callable[..., bool]:
+    content_filter = DiscardRareKuten(
+        max_average_sentence_length=max_average_sentence_length
+    )
+
+    def judge(example: dict[str, Any]) -> bool:
+        doc = content_filter.apply(Document(example["text"]))
+        return not doc.is_rejected
 
     return judge
 
