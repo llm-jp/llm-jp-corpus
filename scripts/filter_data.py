@@ -55,7 +55,9 @@ def get_data_files(search_dir: pathlib.Path, ext: str) -> dict[Split, pathlib.Pa
     return data_files
 
 
-def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> DatasetDict:
+def reformat_and_filter_dataset(
+    dataset: DatasetDict, dataset_name: str, strict: bool = False
+) -> DatasetDict:
     reformat_fn: Callable[..., dict[str, Any]]
     map_fns: list[Callable[..., dict[str, Any]]] = []
     filter_fns: list[Callable[..., bool]] = []
@@ -76,11 +78,15 @@ def reformat_and_filter_dataset(dataset: DatasetDict, dataset_name: str) -> Data
         filter_fns.append(is_not_empty())
         filter_fns.append(is_japanese())
         filter_fns.append(is_not_ad_content())
-        filter_fns.append(is_not_adult_content())
-        filter_fns.append(is_not_discrimination_content())
-        filter_fns.append(is_not_violence_content())
-        filter_fns.append(has_good_average_sentence_length())
-        filter_fns.append(has_good_compression_ratio())
+        max_allowed_num: int = 2 if strict else 3
+        filter_fns.append(is_not_adult_content(max_allowed_num))
+        filter_fns.append(is_not_discrimination_content(max_allowed_num))
+        filter_fns.append(is_not_violence_content(max_allowed_num))
+        max_average_sentence_length: int = 80 if strict else 250
+        filter_fns.append(has_good_average_sentence_length(max_average_sentence_length))
+        min_score = 0.375 if strict else 0.30
+        max_score = 0.70
+        filter_fns.append(has_good_compression_ratio(min_score, max_score))
     elif dataset_name == "en_pile":
         reformat_fn = reformat_data("text")
         filter_fns.append(is_not_empty())
@@ -129,6 +135,11 @@ def main() -> None:
         help="Path to the output directory.",
     )
     parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Whether to use strict filtering.",
+    )
+    parser.add_argument(
         "--overwrite",
         action="store_true",
         help="Whether to overwrite the output directory.",
@@ -148,7 +159,9 @@ def main() -> None:
         streaming=True,
     )
 
-    dataset = reformat_and_filter_dataset(dataset, args.DATASET_NAME)
+    dataset = reformat_and_filter_dataset(
+        dataset, args.DATASET_NAME, strict=args.strict
+    )
 
     logger.info(f"Writing the reformatted data to {output_dir}.")
     for split, ds in dataset.items():
