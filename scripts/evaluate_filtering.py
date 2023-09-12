@@ -64,11 +64,18 @@ def main() -> None:
         type=str,
         help="Path to the data directory.",
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Whether to use strict filtering.",
+    )
     args = parser.parse_args()
 
     logger.info("Loading the dataset")
     dataset: DatasetDict = load_dataset("json", data_files=args.input_path)
-    filtered_dataset = reformat_and_filter_dataset(dataset, args.DATASET_NAME)
+    filtered_dataset = reformat_and_filter_dataset(
+        dataset, args.DATASET_NAME, strict=args.strict
+    )
 
     assert "train" in dataset.keys() and "train" in filtered_dataset.keys()
     stats = get_stats(dataset["train"], filtered_dataset["train"])
