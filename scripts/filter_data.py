@@ -90,6 +90,7 @@ def reformat_and_filter_dataset(
     elif dataset_name == "en_pile":
         reformat_fn = reformat_data("text")
         filter_fns.append(is_not_empty())
+        filter_fns.append(lambda x: x["meta"]["pile_set_name"] != "Books3")
     elif dataset_name == "code_stack":
         reformat_fn = reformat_data("content")
         filter_fns.append(has_valid_extension())
