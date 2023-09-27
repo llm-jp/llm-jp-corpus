@@ -1,0 +1,13 @@
+biz
+cc
+com
+info
+jp
+me
+net
+org
+site
+tokyo
+tv
+work
+xyz

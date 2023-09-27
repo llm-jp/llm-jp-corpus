@@ -35,7 +35,7 @@ python filter_data.py code_stack --input_dir data/download/code_stack --output_d
 ## Tokenizing the data
 
 ```bash
-mkdir -p data/tokenize
+mkdir -p data/tokenize  # or create a corresponding symlink
 python tokenize_data.py --input_path data/filter/ja_wiki --output_dir data/tokenize/ja_wiki --sentencepiece_model ./spm.model
 python tokenize_data.py --input_path data/filter/en_wiki --output_dir data/tokenize/en_wiki --sentencepiece_model ./spm.model
 python tokenize_data.py --input_path data/filter/ja_cc --output_dir data/tokenize/ja_cc --sentencepiece_model ./spm.model
@@ -60,9 +60,17 @@ python sample_data.py --input_path data/tokenize/code_stack --output_dir data/sa
 python extract_ids.py ja_wiki --input_path data/sample/ja_wiki/validation_*.jsonl --output_file data/validation_ids/ja_wiki.json
 ```
 
-## Splitting the data into train and validation sets
+## Splitting the data into train and validation sets by validation IDs
 
 ```bash
 python split_data_by_id.py --input_path data/tokenize/ja_wiki --output_dir data/split/ja_wiki --valid_id_file data/validation_ids/ja_wiki.json --num_proc 6
 ...
+```
+
+---
+
+## Evaluating the filtering quality
+
+```bash
+python evaluate_filtering.py ja_cc --input_path benchmark/ja-mc4.valid.labeled.jsonl
 ```
