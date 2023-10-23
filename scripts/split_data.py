@@ -35,7 +35,7 @@ def main() -> None:
         "--valid_examples_per_shard",
         type=str,
         default="81",
-        help="Validation token size.",
+        help="Number of validation examples per shard.",
     )
     parser.add_argument(
         "--output_format",

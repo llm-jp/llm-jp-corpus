@@ -39,6 +39,7 @@ def tokenize_file(
     # https://github.com/huggingface/datasets/issues/5531
     elif input_format == "pandas-jsonl":
         import pandas as pd
+
         dataset = Dataset.from_pandas(pd.read_json(str(input_file), lines=True))
     else:
         assert input_format == "parquet"
@@ -71,7 +72,7 @@ def main() -> None:
         type=str,
         default="parquet",
         choices=["jsonl", "parquet", "pandas-jsonl"],
-        help="Input format. "pandas-jsonl" is for Oscar loading (safe jsonl).",
+        help='Input format. "pandas-jsonl" is for Oscar loading (safe jsonl).',
     )
     parser.add_argument(
         "--output_dir",
