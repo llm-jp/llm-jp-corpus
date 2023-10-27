@@ -14,7 +14,7 @@ def main() -> None:
     parser.add_argument(
         "DATASET_NAME",
         type=str,
-        choices=["ja_wiki", "en_wiki", "ja_cc", "en_pile", "code_stack"],
+        choices=["ja_wiki", "en_wiki", "ja_cc", "en_pile", "code_stack", "ja_oscar"],
         help="Dataset name",
     )
     parser.add_argument(
@@ -54,6 +54,12 @@ def main() -> None:
         dataset = load_dataset(
             "mc4",
             languages=["ja"],
+            streaming=True,
+        )
+    elif args.DATASET_NAME == "ja_oscar":
+        dataset = load_dataset(
+            "oscar",
+            subset="unshuffled_deduplicated_ja",
             streaming=True,
         )
     elif args.DATASET_NAME == "en_pile":

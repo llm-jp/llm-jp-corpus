@@ -17,6 +17,7 @@ mkdir -p data/download  # or create a corresponding symlink
 python download_data.py ja_wiki --output_dir data/download/ja_wiki
 python download_data.py en_wiki --output_dir data/download/en_wiki
 python download_data.py ja_cc --output_dir data/download/ja_cc
+python download_data.py ja_oscar --output_dir data/download/ja_oscar
 python download_data.py en_pile --output_dir data/download/en_pile
 python download_data.py code_stack --output_dir data/download/code_stack
 ```
