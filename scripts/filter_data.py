@@ -41,12 +41,18 @@ CHUNK_SIZE = 10_000_000
 
 def get_data_files(search_dir: pathlib.Path, ext: str) -> dict[Split, str]:
     data_files = {}
-    if len(list(search_dir.glob(f"*train*.{ext}"))):
-        data_files[Split.TRAIN] = str(search_dir.joinpath(f"*train*.{ext}"))
-    if len(list(search_dir.glob(f"*valid*.{ext}"))):
-        data_files[Split.VALIDATION] = str(search_dir.joinpath(f"*valid*.{ext}"))
-    if len(list(search_dir.glob(f"*test*.{ext}"))):
-        data_files[Split.TEST] = str(search_dir.joinpath(f"*test*.{ext}"))
+    if file_paths := sorted(list(search_dir.glob(f"*train*.{ext}"))):
+        data_files[Split.TRAIN] = [str(file_path) for file_path in file_paths]
+    if file_paths := sorted(list(search_dir.glob(f"*train*/**/*{ext}"))):
+        data_files[Split.TRAIN] = [str(file_path) for file_path in file_paths]
+    if file_paths := sorted(list(search_dir.glob(f"*valid*.{ext}"))):
+        data_files[Split.VALIDATION] = [str(file_path) for file_path in file_paths]
+    if file_paths := sorted(list(search_dir.glob(f"*valid*/**/*{ext}"))):
+        data_files[Split.VALIDATION] = [str(file_path) for file_path in file_paths]
+    if file_paths := sorted(list(search_dir.glob(f"*test*.{ext}"))):
+        data_files[Split.TEST] = [str(file_path) for file_path in file_paths]
+    if file_paths := sorted(list(search_dir.glob(f"*test*/**/*{ext}"))):
+        data_files[Split.TEST] = [str(file_path) for file_path in file_paths]
     if len(data_files) == 0:
         raise ValueError(f"No data files found in {search_dir}.")
     return data_files
@@ -98,6 +104,8 @@ def reformat_and_filter_dataset(
     elif dataset_name == "en_slimpajama":
         reformat_fn = reformat_data("text")
         filter_fns.append(is_not_empty())
+        filter_fns.append(lambda x: x["meta"]["redpajama_set_name"] != "RedPajamaBook")
+        filter_fns.append(lambda x: x["meta"]["redpajama_set_name"] != "RedPajamaGithub")
     elif dataset_name == "en_refinedweb":
         reformat_fn = reformat_data("content")
         filter_fns.append(is_not_empty())
@@ -162,7 +170,7 @@ def main() -> None:
         "--input_format",
         type=str,
         default="parquet",
-        choices=["parquet", "json"],
+        choices=["parquet", "json", "json.zst"],
         help="Whether to load the dataset from parquet or json.",
     )
     parser.add_argument(
@@ -185,6 +193,12 @@ def main() -> None:
         dataset: DatasetDict = load_dataset(
             "json",
             data_files=get_data_files(input_dir, "jsonl"),
+            streaming=True,
+        )
+    elif args.input_format == "json.zst":
+        dataset: DatasetDict = load_dataset(
+            "json",
+            data_files=get_data_files(input_dir, "jsonl.zst"),
             streaming=True,
         )
     elif args.input_format == "parquet":
