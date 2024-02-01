@@ -36,7 +36,7 @@ def main() -> None:
     parser.add_argument(
         "DATASET_NAME",
         type=str,
-        choices=["ja_wiki", "en_wiki", "ja_cc", "en_pile", "code_stack"],
+        choices=list(DATASET_NAME_TO_KEY.keys()),
         help="Dataset name",
     )
     parser.add_argument(
