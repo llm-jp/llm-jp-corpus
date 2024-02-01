@@ -18,6 +18,9 @@ DATASET_NAME_TO_KEY: dict[str, Optional[str]] = {
     "ja_cc": None,
     "en_pile": None,
     "code_stack": "hexsha",
+    # v2
+    "en_slimpajama": None,
+    "en_refinedweb": None,
 }
 
 
