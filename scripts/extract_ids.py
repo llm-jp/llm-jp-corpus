@@ -21,6 +21,8 @@ DATASET_NAME_TO_KEY: dict[str, Optional[str]] = {
     # v2
     "en_slimpajama": None,
     "en_refinedweb": None,
+    "zh_wiki": "id",
+    "ko_wiki": "id",
 }
 
 
