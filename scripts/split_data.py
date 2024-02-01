@@ -74,6 +74,7 @@ def main() -> None:
             args.overwrite,
             args.output_format,
         )
+        train_example_size += len(train_dataset)
 
         output_file = (
             output_dir
@@ -85,6 +86,7 @@ def main() -> None:
             args.overwrite,
             args.output_format,
         )
+        valid_example_size += len(valid_dataset)
 
     logger.info(f"Finished extracting train data of {train_example_size:,} examples.")
     logger.info(f"Finished extracting valid data of {valid_example_size:,} examples.")
