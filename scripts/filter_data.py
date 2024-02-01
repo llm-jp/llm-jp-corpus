@@ -39,7 +39,8 @@ disable_caching()
 
 CHUNK_SIZE = 10_000_000
 
-def get_data_files(search_dir: pathlib.Path, ext: str) -> dict[Split, str]:
+
+def get_data_files(search_dir: pathlib.Path, ext: str) -> dict[Split, list[str]]:
     data_files = {}
     if file_paths := sorted(list(search_dir.glob(f"*train*.{ext}"))):
         data_files[Split.TRAIN] = [str(file_path) for file_path in file_paths]
@@ -64,12 +65,7 @@ def reformat_and_filter_dataset(
     reformat_fn: Callable[..., dict[str, Any]]
     map_fns: list[Callable[..., dict[str, Any]]] = []
     filter_fns: list[Callable[..., bool]] = []
-    if dataset_name == "ja_wiki":
-        reformat_fn = reformat_data("text")
-        map_fns.append(remove_wikipedia_footnote())
-        map_fns.append(remove_empty_parenthesis())
-        filter_fns.append(is_not_empty())
-    elif dataset_name == "en_wiki":
+    if dataset_name in {"ja_wiki", "en_wiki", "zh_wiki", "ko_wiki"}:
         reformat_fn = reformat_data("text")
         map_fns.append(remove_wikipedia_footnote())
         map_fns.append(remove_empty_parenthesis())
@@ -105,7 +101,9 @@ def reformat_and_filter_dataset(
         reformat_fn = reformat_data("text")
         filter_fns.append(is_not_empty())
         filter_fns.append(lambda x: x["meta"]["redpajama_set_name"] != "RedPajamaBook")
-        filter_fns.append(lambda x: x["meta"]["redpajama_set_name"] != "RedPajamaGithub")
+        filter_fns.append(
+            lambda x: x["meta"]["redpajama_set_name"] != "RedPajamaGithub"
+        )
     elif dataset_name == "en_refinedweb":
         reformat_fn = reformat_data("content")
         filter_fns.append(is_not_empty())
@@ -143,6 +141,8 @@ def main() -> None:
             # v2
             "en_slimpajama",
             "en_refinedweb",
+            "zh_wiki",
+            "ko_wiki",
         ],
         help="Dataset name",
     )
@@ -189,20 +189,21 @@ def main() -> None:
     start_time = time.time()
 
     logger.info("Loading the dataset")
+    dataset: DatasetDict
     if args.input_format == "json":
-        dataset: DatasetDict = load_dataset(
+        dataset = load_dataset(
             "json",
             data_files=get_data_files(input_dir, "jsonl"),
             streaming=True,
         )
     elif args.input_format == "json.zst":
-        dataset: DatasetDict = load_dataset(
+        dataset = load_dataset(
             "json",
             data_files=get_data_files(input_dir, "jsonl.zst"),
             streaming=True,
         )
     elif args.input_format == "parquet":
-        dataset: DatasetDict = load_dataset(
+        dataset = load_dataset(
             "parquet",
             data_files=get_data_files(input_dir, "parquet"),
             streaming=True,
