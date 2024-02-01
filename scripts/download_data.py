@@ -14,7 +14,15 @@ def main() -> None:
     parser.add_argument(
         "DATASET_NAME",
         type=str,
-        choices=["ja_wiki", "en_wiki", "ja_cc", "en_pile", "code_stack"],
+        choices=[
+            "ja_wiki",
+            "en_wiki",
+            "ja_cc",
+            "en_pile",
+            "code_stack",
+            "zh_wiki",
+            "ko_wiki",
+        ],
         help="Dataset name",
     )
     parser.add_argument(
@@ -48,6 +56,20 @@ def main() -> None:
             "wikipedia",
             language="en",
             date="20230720",
+            beam_runner="DirectRunner",
+        )
+    elif args.DATASET_NAME == "zh_wiki":
+        dataset = load_dataset(
+            "wikipedia",
+            language="zh",
+            date="20240122",
+            beam_runner="DirectRunner",
+        )
+    elif args.DATASET_NAME == "ko_wiki":
+        dataset = load_dataset(
+            "wikipedia",
+            language="ko",
+            date="20240122",
             beam_runner="DirectRunner",
         )
     elif args.DATASET_NAME == "ja_cc":
