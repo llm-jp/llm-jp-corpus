@@ -56,8 +56,6 @@ def main() -> None:
 
     valid_examples_per_shard: int = canonicalize_number(args.valid_examples_per_shard)
 
-    train_token_size: int = 0
-    valid_token_size: int = 0
     train_example_size: int = 0
     valid_example_size: int = 0
     output_file: pathlib.Path
@@ -76,8 +74,6 @@ def main() -> None:
             args.overwrite,
             args.output_format,
         )
-        train_token_size += sum(train_dataset["num_tokens"])
-        train_example_size += len(train_dataset)
 
         output_file = (
             output_dir
@@ -89,15 +85,9 @@ def main() -> None:
             args.overwrite,
             args.output_format,
         )
-        valid_token_size += sum(valid_dataset["num_tokens"])
-        valid_example_size += len(valid_dataset)
 
-    logger.info(
-        f"Finished extracting train data of {train_token_size:,} tokens, {train_example_size:,} examples."
-    )
-    logger.info(
-        f"Finished extracting valid data of {valid_token_size:,} tokens, {valid_example_size:,} examples."
-    )
+    logger.info(f"Finished extracting train data of {train_example_size:,} examples.")
+    logger.info(f"Finished extracting valid data of {valid_example_size:,} examples.")
 
 
 def canonicalize_number(number: str) -> int:
